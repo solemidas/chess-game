@@ -3,7 +3,7 @@
     "outDir": "build/dist",
     "module": "esnext",
     "target": "es5",
-    "lib": ["es6", "dom"],
+    "lib": ["es6", "dom", "esnext"],
     "sourceMap": true,
     "allowJs": true,
     "jsx": "react",
@@ -15,7 +15,19 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "baseUrl": ".",
+    "skipLibCheck": false,
+    "paths": {
+        "assets/*": ["src/assets/*"],
+        "components/*": ["src/components/*"],
+        "constants/*": ["src/constants/*"],
+        "images/*": ["src/images/*"],
+        "App": ["src/App.tsx"],
+        "AppCss": ["src/App.css"],
+        "ServiceWorker": ["src/registerServiceWorker.ts"],
+        "Bishop": ["src/assets/images/bishop.svg"]
+    }
   },
   "exclude": [
     "node_modules",
