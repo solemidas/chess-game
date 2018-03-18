@@ -4,12 +4,34 @@ import * as ChessPieces from 'components/ChessPieces';
 const {
   Component,
 } = React;
-export type ChessPieceType = 'King' | 'Queen' | 'Rook' | 'Knight' | 'Pawn' | 'Bishop';
+export type ChessPieceName = 'King' | 'Queen' | 'Rook' | 'Knight' | 'Pawn' | 'Bishop' | 'Empty';
+export interface Position {
+  x: number;
+  y: number;
+}
+
+enum direction {
+  up = 1,
+  down = -1
+}
+
+type ColorType = 'black' | 'white' | 'none';
+export interface ChessPieceType {
+  name: ChessPieceName;
+  position: Position;
+  inGame: boolean;
+  color: ColorType;
+  direction?: direction;
+  highlight?: boolean;
+  moved?: boolean;
+}
 
 interface Props {
-  color: string;
+  handlePieceClick: (piece: ChessPieceType) => void;
   piece: ChessPieceType;
 }
+
+export type ChessBoardType = ChessPieceType [] [];
 
 interface State {
 
@@ -21,13 +43,17 @@ export default class ChessPiece extends Component<Props, State> {
   }
   render(): React.ReactNode {
     const {
-      piece,
-      color,
+      piece: {
+        name,
+        color
+      },
+      handlePieceClick
     } = this.props;
-    const Piece = ChessPieces[piece].replace('stylePlaceholder', `style="fill:${color}"`);
+    let Piece = ChessPieces[name];
+    Piece = Piece ? Piece.replace('stylePlaceholder', `style="fill:${color}"`) : '';
     return(
       <div
-        {...this.props}
+        onClick={() => handlePieceClick(this.props.piece)}
         style={{
           height: '80px',
         }}

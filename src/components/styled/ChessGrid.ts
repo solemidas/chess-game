@@ -5,6 +5,7 @@ import {
 import {
   cloud,
   midnightBlue,
+  electronBlue,
 } from 'constants/colors';
 
 import {
@@ -13,6 +14,7 @@ import {
 } from 'constants/sizes';
 export interface CellProps {
   black?: boolean;
+  highlight?: boolean;
 }
 
 export const ChessGrid = styled.div`
@@ -24,7 +26,14 @@ export const ChessGrid = styled.div`
 `;
 
 export const ChessCell = styled.div`
-  background-color: ${(props: CellProps) => props.black ? midnightBlue : cloud};
+  background-color: ${(props: CellProps) => {
+    const {
+      black,
+      highlight,
+    } = props;
+    const color = black ? midnightBlue : cloud;
+    return highlight ? electronBlue : color;
+  }};
   height: ${rem(cellHeight)};
   width: ${rem(cellWidth)};
 `;
