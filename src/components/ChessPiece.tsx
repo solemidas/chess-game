@@ -10,7 +10,7 @@ export interface Position {
   y: number;
 }
 
-enum direction {
+export enum Direction {
   up = 1,
   down = -1
 }
@@ -21,7 +21,7 @@ export interface ChessPieceType {
   position: Position;
   inGame: boolean;
   color: ColorType;
-  direction?: direction;
+  direction?: Direction;
   highlight?: boolean;
   moved?: boolean;
 }

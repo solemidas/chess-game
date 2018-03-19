@@ -2,9 +2,10 @@ import {
   ChessPieceName,
   ChessBoardType,
   ChessPieceType,
-  Position
+  Position,
+  // Direction,
 } from 'components/ChessPiece';
-
+type Coordinates = 'x' | 'y';
 import * as _ from 'lodash';
 export default class ChessRules {
   private pieces: ChessPieceName [];
@@ -78,7 +79,54 @@ export default class ChessRules {
   get chessBoardElements(): ChessBoardType {
     return this.chessBoard;
   }
+  /**
+   * @description searches for valid moves horizontally or vertically.
+   * @param {number} position
+   * @param {number} dir 
+   */
+  searchLegalMoves(coordinateValue: number, cord: Coordinates, otherCoordinateValue: number): Position [] {
+    let positiveCells: ChessPieceType [] = [];
+    let negativeCells: ChessPieceType [] = [];
+    const y = cord === 'x' ? otherCoordinateValue : coordinateValue;
+    const x = cord === 'y' ? otherCoordinateValue : coordinateValue;
+    if (cord === 'x') {
+      let positiveDistance = 8 - x;
+      let negativeDistance = x;
+      for (let i = 1; i < positiveDistance; i++) {
+        positiveCells.push(this.chessBoard[x + i][y]);
+      }
+      for (let i = -negativeDistance; i < 0; i++) {
+        negativeCells.push(this.chessBoard[x + i][y]);
+      }
+    } else {
+      let positiveDistance = 8 - y;
+      let negativeDistance = y;
+      for (let i = 1; i < positiveDistance; i++) {
+        positiveCells.push(this.chessBoard[x][y + i]);
+      }
+      for (let i = -negativeDistance; i < 0; i++) {
+        negativeCells.push(this.chessBoard[x][y + i]);
+      }
+    }
 
+    const reduceMoves = (cells: ChessPieceType []): Position [] => {
+      const reducedMoves: Position [] = [];
+      for (let i = 0; i < cells.length; i ++) {
+        const cell = cells[i];
+        if (cell.name !== 'Empty') {
+          break;
+        }
+        reducedMoves.push(cell.position);
+      }
+      return ChessRules.swapMultipleCoordinates(reducedMoves);
+    };
+    const negativeMoves = reduceMoves(_.reverse(negativeCells));
+    const positiveMoves = reduceMoves(positiveCells);
+    return [...negativeMoves, ...positiveMoves];
+  }
+  // getDiagonalBlockers() {
+    
+  // }
   getLegalPawnMoves(piece: ChessPieceType): Position [] {
     const fowardMoves: Position [] = [];
     const diagonalMoves: Position [] = [];
@@ -152,7 +200,6 @@ export default class ChessRules {
         case 'Rook':
           return this.getLegalRookMoves(piece);
         default:
-          console.log(piece);
           return [];
     }
   }
