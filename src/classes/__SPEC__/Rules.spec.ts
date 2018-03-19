@@ -1,4 +1,4 @@
-import ChessRules from 'classes/ChessRules';
+import ChessRules from 'classes/Rules';
 
 describe('Chess Rules', () => {
   let chessRules: ChessRules;

@@ -1,12 +1,13 @@
 import * as React from 'react';
-import ChessRules from 'classes/ChessRules';
+import ChessRules from 'classes/Rules';
 import ChessPiece, {
   ChessPieceName,
   ChessBoardType,
   ChessPieceType,
-  Position
 } from 'components/ChessPiece';
-
+import {
+  Position
+} from 'classes/Matrix';
 import {
   ChessGrid,
   ChessCell,
@@ -24,7 +25,8 @@ interface State {
   chessBoardElements: ChessBoardType;
   pieces: ChessPieceName [];
   moves: Position [];
-  pieceToMove?: ChessPieceType;
+  from?: Position;
+  to?: Position;
 }
 
 export default class ChessBoard extends Component<Props, State> {
@@ -49,7 +51,7 @@ export default class ChessBoard extends Component<Props, State> {
         'Knight',
         'Rook',
       ],
-      moves: []
+      moves: [],
     };
   }
   componentWillMount() {
@@ -68,29 +70,30 @@ export default class ChessBoard extends Component<Props, State> {
       });
     });
   }
-  highlightLegalBlocks(moves: Position [], pieceToMove: ChessPieceType) {
+  highlightLegalBlocks(moves: Position [], from: Position) {
     let chessBoardElements = this.clearHighlitedBlocks();
-    moves.forEach(({x, y}) => {      
-      chessBoardElements[x][y].highlight = true;
+    moves.forEach(({row, col}) => {      
+      chessBoardElements[row][col].highlight = true;
     });
     this.setState({
       chessBoardElements,
       moves,
-      pieceToMove,
+      from,
     });
   }
 
-  handleBoardClick(piece: ChessPieceType) {
+  handleBoardClick(piece: ChessPieceType, position: Position) {
+    console.log(piece, position);
     const {
       moves,
-      pieceToMove
+      from
     } = this.state;
-    if (moves.length > 0 && pieceToMove) {
-      const chessBoardElements = this.chessRules.makeMove(moves, piece, pieceToMove);
+    if (moves.length > 0 && from) {
+      console.log('from:', from);
+      const chessBoardElements = this.chessRules.makeMove(moves, from, position);
       this.setState({
         chessBoardElements,
         moves: [],
-        pieceToMove: undefined
       }, () => {
         let chessBoard = this.clearHighlitedBlocks();
         this.setState({
@@ -98,26 +101,26 @@ export default class ChessBoard extends Component<Props, State> {
         });
       });
     } else {
-      const legalMoves = this.chessRules.getLegalMoves(piece);
-      this.highlightLegalBlocks(legalMoves, piece);
+      const legalMoves = this.chessRules.getLegalMoves(piece, position);
+      this.highlightLegalBlocks(legalMoves, position);
     }
   }
   renderChessCells() {
     const {
       chessBoardElements
     } = this.state;
-    return chessBoardElements.map((row: ChessPieceType []) => {
-      return row.map((piece: ChessPieceType) => {
-        const { position, highlight } = piece;
-        const {x, y} = position;
+    return chessBoardElements.map((row: ChessPieceType [], i: number) => {
+      return row.map((piece: ChessPieceType, j: number) => {
+        const { highlight } = piece;
         return (
           <ChessCell
-            black={(x + y) % 2 === 0}
-            key={`${piece}-${y}${x}`}
+            black={(i + j) % 2 === 0}
+            key={`${piece}-${j}${i}`}
             highlight={highlight}
           >
             <ChessPiece
               piece={piece}
+              position={{row: i, col: j}}
               handlePieceClick={this.handleBoardClick}
             />
           </ChessCell>);

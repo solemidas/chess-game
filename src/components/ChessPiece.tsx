@@ -1,14 +1,13 @@
 
 import * as React from 'react';
 import * as ChessPieces from 'components/ChessPieces';
+import {
+  Position
+} from 'classes/Matrix';
 const {
   Component,
 } = React;
 export type ChessPieceName = 'King' | 'Queen' | 'Rook' | 'Knight' | 'Pawn' | 'Bishop' | 'Empty';
-export interface Position {
-  x: number;
-  y: number;
-}
 
 export enum Direction {
   up = 1,
@@ -18,17 +17,17 @@ export enum Direction {
 type ColorType = 'black' | 'white' | 'none';
 export interface ChessPieceType {
   name: ChessPieceName;
-  position: Position;
   inGame: boolean;
   color: ColorType;
-  direction?: Direction;
+  direction: Direction;
   highlight?: boolean;
   moved?: boolean;
 }
 
 interface Props {
-  handlePieceClick: (piece: ChessPieceType) => void;
+  handlePieceClick: (piece: ChessPieceType, position: Position) => void;
   piece: ChessPieceType;
+  position: Position;
 }
 
 export type ChessBoardType = ChessPieceType [] [];
@@ -47,13 +46,14 @@ export default class ChessPiece extends Component<Props, State> {
         name,
         color
       },
-      handlePieceClick
+      handlePieceClick,
+      position
     } = this.props;
     let Piece = ChessPieces[name];
     Piece = Piece ? Piece.replace('stylePlaceholder', `style="fill:${color}"`) : '';
     return(
       <div
-        onClick={() => handlePieceClick(this.props.piece)}
+        onClick={() => handlePieceClick(this.props.piece, position)}
         style={{
           height: '80px',
         }}
