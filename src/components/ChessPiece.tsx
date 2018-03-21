@@ -50,7 +50,8 @@ export default class ChessPiece extends Component<Props, State> {
       position
     } = this.props;
     let Piece = ChessPieces[name];
-    Piece = Piece ? Piece.replace('stylePlaceholder', `style="fill:${color}"`) : '';
+    const fill = color === 'black' ? color : '#e056fd';
+    Piece = Piece ? Piece.replace('stylePlaceholder', `style="fill:${fill}"`) : '';
     return(
       <div
         onClick={() => handlePieceClick(this.props.piece, position)}

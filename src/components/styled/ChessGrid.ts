@@ -5,7 +5,7 @@ import {
 import {
   cloud,
   midnightBlue,
-  electronBlue,
+  turbo,
 } from 'constants/colors';
 
 import {
@@ -29,11 +29,13 @@ export const ChessCell = styled.div`
   background-color: ${(props: CellProps) => {
     const {
       black,
-      highlight,
     } = props;
     const color = black ? midnightBlue : cloud;
-    return highlight ? electronBlue : color;
+    return color;
   }};
   height: ${rem(cellHeight)};
   width: ${rem(cellWidth)};
+  -webkit-box-shadow: ${(props: CellProps) => {
+    return props.highlight ? `inset 0 0 60px ${turbo}` : 'none';
+  }};
 `;

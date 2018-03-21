@@ -53,6 +53,30 @@ export default class Matrix<T> {
   get Matrix(): [T []] {
     return this.matrix;
   }
+  getDiagonalChanges(direction: Direction): Change [] {
+    let changes: Change [] = [];
+    switch (direction) {
+      case 'UP':
+        changes.push(this.getDirectionChange('TOP_RIGHT'));
+        changes.push(this.getDirectionChange('TOP_LEFT'));
+        break;
+      case 'DOWN':
+        changes.push(this.getDirectionChange('BOTTOM_LEFT'));
+        changes.push(this.getDirectionChange('BOTTOM_RIGHT'));
+        break;
+      case 'LEFT':
+        changes.push(this.getDirectionChange('TOP_LEFT'));
+        changes.push(this.getDirectionChange('BOTTOM_LEFT'));
+        break;
+      case 'RIGHT':
+        changes.push(this.getDirectionChange('TOP_RIGHT'));
+        changes.push(this.getDirectionChange('BOTTOM_RIGHT'));
+        break;
+      default:
+        break;
+    }
+    return changes;
+  }
   getDirectionChange(direction: Direction): Change {
     let drow = 0;
     let dcol = 0;

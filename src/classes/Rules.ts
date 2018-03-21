@@ -1,14 +1,16 @@
 import {
   ChessPieceName,
   ChessPieceType,
+
 } from 'components/ChessPiece';
 import * as _ from 'lodash';
-import Matrix, { Position, Direction } from 'classes/Matrix';
+import Matrix, { Position, Direction, Change } from 'classes/Matrix';
 
 type MoveType = 'CAPTURE' | 'ALLOW_BOTH' | 'NORMAL';
 export default class ChessRules {
   private pieces: ChessPieceName [];
   private chessBoard: Matrix<ChessPieceType>;
+  private queenDirections: Direction [];
   constructor() {
     this.pieces = [
       'Rook',
@@ -19,6 +21,16 @@ export default class ChessRules {
       'Bishop',
       'Knight',
       'Rook',
+    ];
+    this.queenDirections = [
+      'LEFT',
+      'RIGHT',
+      'UP',
+      'DOWN',
+      'TOP_LEFT',
+      'TOP_RIGHT',
+      'BOTTOM_LEFT',
+      'BOTTOM_RIGHT'
     ];
     this.chessBoard = new Matrix<ChessPieceType>(8, 8);
     this.initializeBoard();
@@ -61,13 +73,25 @@ export default class ChessRules {
   }
   getValidMoves(piece: ChessPieceType, suggestedMoves: Position [], blocks: number, moveType: MoveType) {
     let moves: Position [] = [];
-    
+    let stop = false;
     suggestedMoves.splice(blocks);
     console.log(suggestedMoves);
-    suggestedMoves.forEach((move: Position) => {
+    suggestedMoves.forEach((move: Position, idx: number) => {
       const pieceAtPosition = this.chessBoard.getEelement(move.row, move.col);
-      if (pieceAtPosition.color !== piece.color && this.allowMove(pieceAtPosition, moveType)) {
-        moves.push(move);
+      if (pieceAtPosition.color !== piece.color && this.allowMove(pieceAtPosition, moveType) && !stop) {
+        const previousMove = moves[idx - 1];
+        if (previousMove) {
+          const previousPiece = this.chessBoard.getEelement(previousMove.row, previousMove.col);
+          if (previousPiece.color === pieceAtPosition.color && previousPiece.color !== 'none') {
+            stop = true;
+          } else {
+            moves.push(move);
+          }
+        } else {
+          moves.push(move);
+        }
+      } else {
+        stop = true;
       }
     });
     return moves;
@@ -93,38 +117,51 @@ export default class ChessRules {
       ...verticalMoves
     ];
   }
-  getLegalKingMoves(piece: ChessPieceType, position: Position): Position [] {
-    let diagonalMoves: Position [] = [];
-    let verticalMoves: Position [] = [];
-    const diagonalDirections: Direction [] = 
-      piece.direction === -1 ?
-      ['TOP_LEFT', 'TOP_RIGHT'] :
-      ['BOTTOM_LEFT', 'BOTTOM_RIGHT'];
-    diagonalDirections.forEach((direction: Direction) => {
-      const diagonals = this.chessBoard.getDirectionMoves(position, direction);
-      diagonalMoves = [...diagonalMoves, ...this.getValidMoves(piece, diagonals, 1, 'CAPTURE')];
+  nonKnightMoves(piece: ChessPieceType, position: Position, blocks: number, directions:  Direction []): Position [] {
+    let moves: Position [] = [];
+    directions.forEach((direction: Direction) => {
+      const movesInDirection = this.chessBoard.getDirectionMoves(position, direction);
+      moves = [...moves, ...this.getValidMoves(piece, movesInDirection, blocks, 'ALLOW_BOTH')];
     });
-    const verticalDirection: Direction = 
-      piece.direction === -1 ? 'UP' : 'DOWN';
-    const blocks = piece.moved ? 1 : 2;
-    let verticals = this.chessBoard.getDirectionMoves(position, verticalDirection);
-    verticalMoves = this.getValidMoves(piece, verticals, blocks, 'NORMAL');
-    return [
-      ...diagonalMoves,
-      ...verticalMoves
-    ];
+    return moves;
   }
-  getLegalQueenMoves(piece: ChessPieceType): Position [] {
-    return [];
+  getLegalKingMoves(piece: ChessPieceType, position: Position): Position [] {
+    return this.nonKnightMoves(piece, position, 1, this.queenDirections);
   }
-  getLegalBishopMoves(piece: ChessPieceType): Position [] {
-    return [];
+  getLegalQueenMoves(piece: ChessPieceType, position: Position): Position [] {
+    return this.nonKnightMoves(piece, position, 8, this.queenDirections);
   }
-  getLegalKnightMoves(piece: ChessPieceType): Position [] {
-    return [];
+  getLegalBishopMoves(piece: ChessPieceType, position: Position): Position [] {
+    const directions: Direction [] = ['TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT'];
+    return this.nonKnightMoves(piece, position, 8, directions);
   }
-  getLegalRookMoves(piece: ChessPieceType): Position [] {
-    return [];
+  getLegalKnightMoves(piece: ChessPieceType, position: Position): Position [] {
+    const other: Direction [] = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+    let moves: Position [] = [];
+    other.forEach((direction: Direction) => {
+      this.chessBoard.getDiagonalChanges(direction).forEach((change: Change) => {
+        const moveInDirection = this.chessBoard.getDirectionMoves(position, direction)[0];
+        if (moveInDirection) {
+          let { row, col } = moveInDirection;
+          row += change.drow;
+          col += change.dcol;
+          const move = {
+            row, col,
+          };
+          if (change.isValid(row, col)) {
+            moves = [
+              ...moves,
+              ...this.getValidMoves(piece, [move], 1, 'ALLOW_BOTH'),
+            ];
+          }
+        }
+      });
+    });
+    return moves;
+  }
+  getLegalRookMoves(piece: ChessPieceType, position: Position): Position [] {
+    const directions: Direction [] = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+    return this.nonKnightMoves(piece, position, 8, directions);
   }
   getLegalMoves(piece: ChessPieceType, position: Position): Position [] {
     switch (piece.name) {
@@ -133,13 +170,13 @@ export default class ChessRules {
         case 'King':
           return this.getLegalKingMoves(piece, position);
         case 'Queen':
-          return this.getLegalQueenMoves(piece);
+          return this.getLegalQueenMoves(piece, position);
         case 'Bishop':
-          return this.getLegalBishopMoves(piece);
+          return this.getLegalBishopMoves(piece, position);
         case 'Knight':
-          return this.getLegalKnightMoves(piece);
+          return this.getLegalKnightMoves(piece, position);
         case 'Rook':
-          return this.getLegalRookMoves(piece);
+          return this.getLegalRookMoves(piece, position);
         default:
           return [];
     }
