@@ -2,6 +2,15 @@ export interface Position {
   row: number;
   col: number;
 }
+
+export type Direction = 'UP' | 'DOWN' | 'LEFT' |
+  'RIGHT' | 'TOP_RIGHT' | 'TOP_LEFT' | 'BOTTOM_LEFT' | 'BOTTOM_RIGHT';
+
+export interface Change {
+  drow: number;
+  dcol: number;
+  isValid: (row: number, col: number) => boolean;
+}
 export default class Matrix<T> {
   private n: number;
   private m: number;
@@ -23,11 +32,8 @@ export default class Matrix<T> {
     // @ts-ignore
     return matrix;
   }
-  getEelement(row: number, col: number): T | null {
-    if (row > -1 && row < 8 && col > -1 && col < 8) {
-      return this.matrix[row][col];
-    }
-    return null;
+  getEelement(row: number, col: number): T  {
+    return this.matrix[row][col];
   }
   /**
    * @description Sets value at position (row, col)
@@ -47,112 +53,102 @@ export default class Matrix<T> {
   get Matrix(): [T []] {
     return this.matrix;
   }
-  toTopRight(position: Position): Position [] {
+  getDirectionChange(direction: Direction): Change {
+    let drow = 0;
+    let dcol = 0;
+    let isValid = (row: number, col: number) => false;
+    switch (direction) {
+      case 'TOP_RIGHT':
+        drow -= 1;
+        dcol += 1;
+        isValid = (row: number, col: number) => row > -1 && col < 8;
+        break;
+      case 'TOP_LEFT':
+        drow -= 1;
+        dcol -= 1;
+        isValid = (row: number, col: number) => row > -1 && col > -1;
+        break;
+      case 'BOTTOM_RIGHT':
+        drow += 1;
+        dcol += 1;
+        isValid = (row: number, col: number) => row < 8 && col < 8;
+        break;
+      case 'BOTTOM_LEFT':
+        drow += 1;
+        dcol -= 1;
+        isValid = (row: number, col: number) => row < 8 && col > -1;
+        break;
+      case 'UP':
+        drow -= 1;
+        isValid = (row: number, col: number) => row > -1;
+        break;
+      case 'DOWN':
+        drow += 1;
+        isValid = (row: number, col: number) => row < 8;
+        break;
+      case 'LEFT':
+        dcol -= 1;
+        isValid = (row: number, col: number) => col > -1;
+        break;
+      case 'RIGHT':
+        dcol += 1;
+        isValid = (row: number, col: number) => col < 8;
+        break;
+      default:
+        break;
+    }
+    return {
+      drow,
+      dcol,
+      isValid,
+    };
+  }
+  getDirectionMoves(position: Position, direction: Direction): Position [] {
     const moves: Position [] = [];
+    const change: Change = this.getDirectionChange(direction);
     let {
       row,
       col,
     } = position;
     while (true) {
-      row -= 1;
-      col += 1;
-      if ((row < 8 && col > -1) && this.matrix[row] && !this.matrix[row][col]) {
+      row += change.drow;
+      col += change.dcol;
+      if (change.isValid(row, col)) {
         moves.push({
           row, col
         });
       } else {
-        if (this.matrix[row] && this.matrix[row][col]) {
-          moves.push({
-            row, col
-          });
-        }
         break;
       }
     }
     return moves;
+  }
+  toTopRight(position: Position): Position [] {
+    return this.getDirectionMoves(position, 'TOP_RIGHT');
   }
   toTopLeft(position: Position): Position [] {
-    const moves: Position [] = [];
-    let {
-      row,
-      col,
-    } = position;
-    while (true) {
-      row -= 1;
-      col -= 1;
-      if ((row > -1 && col > -1) && this.matrix[row] && !this.matrix[row][col]) {
-        moves.push({
-          row, col
-        });
-      } else {
-        if (this.matrix[row] && this.matrix[row][col]) {
-          moves.push({
-            row, col
-          });
-        }
-        break;
-      }
-    }
-    return moves;
+    return this.getDirectionMoves(position, 'TOP_LEFT');
   }
   toBottomRight(position: Position) {
-    const moves: Position [] = [];
-    let {
-      row,
-      col,
-    } = position;
-    while (true) {
-      row += 1;
-      col += 1;
-      if ((row < 8 && col < 8) && this.matrix[row] && !this.matrix[row][col]) {
-        moves.push({
-          row, col
-        });
-      } else {
-        if (this.matrix[row] && this.matrix[row][col]) {
-          moves.push({
-            row, col
-          });
-        }
-        break;
-      }
-    }
-    return moves;
+    return this.getDirectionMoves(position, 'BOTTOM_RIGHT');
   }
   toBottomLeft(position: Position) {
-    const moves: Position [] = [];
-    let {
-      row,
-      col,
-    } = position;
-    while (true) {
-      row += 1;
-      col -= 1;
-      if ((row < 8 && col > -1) && this.matrix[row] && !this.matrix[row][col]) {
-        moves.push({
-          row, col
-        });
-      } else {
-        if (this.matrix[row] && this.matrix[row][col]) {
-          moves.push({
-            row, col
-          });
-        }
-        break;
-      }
-    }
-    return moves;
+    return this.getDirectionMoves(position, 'BOTTOM_LEFT');
   }
   getDiagonals(position: Position): Position [] {
     const moves: Position [] = [];
     return moves;
   }
-  getVerticals(position: Position): Position [] {
-    const moves: Position [] = [];
-    return moves;
+  upwards(position: Position): Position [] {
+    return this.getDirectionMoves(position, 'UP');
   }
-  getHorizontals(position: Position): Position [] {
-    const moves: Position [] = [];
-    return moves;
+  downwards(position: Position): Position [] {
+    return this.getDirectionMoves(position, 'DOWN');
+  }
+  toRight(position: Position): Position [] {
+    return this.getDirectionMoves(position, 'RIGHT');
+  }
+  toLeft(position: Position): Position [] {
+    return this.getDirectionMoves(position, 'LEFT');
   }
 }

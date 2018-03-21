@@ -2,9 +2,10 @@ import {
   ChessPieceName,
   ChessPieceType,
 } from 'components/ChessPiece';
-type Coordinates = 'x' | 'y';
 import * as _ from 'lodash';
-import Matrix, { Position } from 'classes/Matrix';
+import Matrix, { Position, Direction } from 'classes/Matrix';
+
+type MoveType = 'CAPTURE' | 'ALLOW_BOTH' | 'NORMAL';
 export default class ChessRules {
   private pieces: ChessPieceName [];
   private chessBoard: Matrix<ChessPieceType>;
@@ -48,42 +49,70 @@ export default class ChessRules {
   get chessBoardElements(): [ChessPieceType []] {
     return this.chessBoard.Matrix;
   }
-  /**
-   * @description searches for valid moves horizontally or vertically.
-   * @param {number} position
-   * @param {number} dir 
-   */
-  searchLegalMoves(coordinateValue: number, cord: Coordinates, otherCoordinateValue: number): Position [] {
-    return [];
-  }
-  // getDiagonalBlockers() {
-    
-  // }
-  getLegalPawnMoves(piece: ChessPieceType, position: Position): Position [] {
-    let moves: Position [] = [];
-    const pushValidMoves = (diagonals: Position []) => {
-      let n = diagonals.length;
-      const diagonal = diagonals[n - 1];
-      const pieceAtDiagonal = diagonal ? this.chessBoard.getEelement(diagonal.row, diagonal.col) : null;
-      if (pieceAtDiagonal && pieceAtDiagonal.color !== piece.color) {
-        moves.push(diagonal);
-      }
-    };
-    if (piece.direction === -1) {
-      const leftDiagonals = this.chessBoard.toTopLeft(position);
-      const rightDiagonals = this.chessBoard.toTopRight(position);
-      pushValidMoves(leftDiagonals);
-      pushValidMoves(rightDiagonals);
-    } else {
-      const leftDiagonals = this.chessBoard.toBottomLeft(position);
-      const rightDiagonals = this.chessBoard.toBottomRight(position);
-      pushValidMoves(leftDiagonals);
-      pushValidMoves(rightDiagonals);
+  allowMove(cell: ChessPieceType, moveType: MoveType): boolean {
+    switch (moveType) {
+      case 'CAPTURE':
+      return cell.color !== 'none';
+      case 'NORMAL':
+        return cell.color === 'none';
+      default:
+        return true;
     }
+  }
+  getValidMoves(piece: ChessPieceType, suggestedMoves: Position [], blocks: number, moveType: MoveType) {
+    let moves: Position [] = [];
+    
+    suggestedMoves.splice(blocks);
+    console.log(suggestedMoves);
+    suggestedMoves.forEach((move: Position) => {
+      const pieceAtPosition = this.chessBoard.getEelement(move.row, move.col);
+      if (pieceAtPosition.color !== piece.color && this.allowMove(pieceAtPosition, moveType)) {
+        moves.push(move);
+      }
+    });
     return moves;
   }
-  getLegalKingMoves(piece: ChessPieceType): Position [] {
-    return [];
+  getLegalPawnMoves(piece: ChessPieceType, position: Position): Position [] {
+    let diagonalMoves: Position [] = [];
+    let verticalMoves: Position [] = [];
+    const diagonalDirections: Direction [] = 
+      piece.direction === -1 ?
+      ['TOP_LEFT', 'TOP_RIGHT'] :
+      ['BOTTOM_LEFT', 'BOTTOM_RIGHT'];
+    diagonalDirections.forEach((direction: Direction) => {
+      const diagonals = this.chessBoard.getDirectionMoves(position, direction);
+      diagonalMoves = [...diagonalMoves, ...this.getValidMoves(piece, diagonals, 1, 'CAPTURE')];
+    });
+    const verticalDirection: Direction = 
+      piece.direction === -1 ? 'UP' : 'DOWN';
+    const blocks = piece.moved ? 1 : 2;
+    let verticals = this.chessBoard.getDirectionMoves(position, verticalDirection);
+    verticalMoves = this.getValidMoves(piece, verticals, blocks, 'NORMAL');
+    return [
+      ...diagonalMoves,
+      ...verticalMoves
+    ];
+  }
+  getLegalKingMoves(piece: ChessPieceType, position: Position): Position [] {
+    let diagonalMoves: Position [] = [];
+    let verticalMoves: Position [] = [];
+    const diagonalDirections: Direction [] = 
+      piece.direction === -1 ?
+      ['TOP_LEFT', 'TOP_RIGHT'] :
+      ['BOTTOM_LEFT', 'BOTTOM_RIGHT'];
+    diagonalDirections.forEach((direction: Direction) => {
+      const diagonals = this.chessBoard.getDirectionMoves(position, direction);
+      diagonalMoves = [...diagonalMoves, ...this.getValidMoves(piece, diagonals, 1, 'CAPTURE')];
+    });
+    const verticalDirection: Direction = 
+      piece.direction === -1 ? 'UP' : 'DOWN';
+    const blocks = piece.moved ? 1 : 2;
+    let verticals = this.chessBoard.getDirectionMoves(position, verticalDirection);
+    verticalMoves = this.getValidMoves(piece, verticals, blocks, 'NORMAL');
+    return [
+      ...diagonalMoves,
+      ...verticalMoves
+    ];
   }
   getLegalQueenMoves(piece: ChessPieceType): Position [] {
     return [];
@@ -102,7 +131,7 @@ export default class ChessRules {
       case 'Pawn':
           return this.getLegalPawnMoves(piece, position);
         case 'King':
-          return this.getLegalKingMoves(piece);
+          return this.getLegalKingMoves(piece, position);
         case 'Queen':
           return this.getLegalQueenMoves(piece);
         case 'Bishop':
@@ -128,6 +157,7 @@ export default class ChessRules {
     };
     const piece = this.chessBoard.getEelement(from.row, from.col);
     if (legalMove && piece) {
+      piece.moved = true;
       this.chessBoard.setElement(from.row, from.col, element);
       this.chessBoard.setElement(to.row, to.col, piece);
     }
