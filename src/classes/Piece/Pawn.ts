@@ -4,15 +4,15 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board';
-import Piece, { PieceName } from 'classes/Piece';
+import Board from 'classes/Board/index';
+import Piece, { PieceName } from 'classes/Piece/index';
 import {
   getValidMoves,
   getDirectionMoves,
 } from 'utils/chess';
 export default class Pawn extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
-    super(alliance, position);
+    super(alliance, position, 10);
   }
   getDiagonalDirections(): MoveDirection [] {
     if (!this.isWhite()) {

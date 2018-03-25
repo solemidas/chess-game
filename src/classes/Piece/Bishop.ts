@@ -3,8 +3,8 @@ import {
   TileCoordinate,
   MoveDirection,
 } from 'classes/index';
-import Board from 'classes/Board';
-import Piece, { PieceName } from 'classes/Piece';
+import Board from 'classes/Board/index';
+import Piece, { PieceName } from 'classes/Piece/index';
 import {
   nonKnightMoves
 } from 'utils/chess';
@@ -18,7 +18,7 @@ export default class Bishop extends Piece {
     ];
   }
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
-    super(alliance, position);
+    super(alliance, position, 30);
   }
   calculateLegalMoves(board: Board): TileCoordinate [] {
     return nonKnightMoves(this, board, 8, Bishop.getDirections());

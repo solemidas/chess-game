@@ -1,4 +1,4 @@
-import Piece from 'classes/Piece';
+import Piece from 'classes/Piece/index';
 import {
   TileCoordinate,
 } from 'classes/index';

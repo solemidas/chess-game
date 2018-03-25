@@ -4,17 +4,17 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board';
+import Board from 'classes/Board/index';
 import {
   getValidMoves,
   getDirectionMoves,
   getDiagonalChanges,
   Change
 } from 'utils/chess';
-import Piece, { PieceName } from 'classes/Piece';
+import Piece, { PieceName } from 'classes/Piece/index';
 export default class Knight extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
-    super(alliance, position);
+    super(alliance, position, 30);
   }
   calculateLegalMoves(board: Board): TileCoordinate [] {
     const other: MoveDirection [] = [

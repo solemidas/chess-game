@@ -1,5 +1,7 @@
 import * as _ from 'lodash';
-import Tile, { EmptyTile, OccupiedTile } from 'classes/Tile';
+import Tile, { EmptyTile, OccupiedTile } from 'classes/Board/Tile';
+import Player, { PlayerType } from 'classes/Player';
+import Piece from 'classes/Piece/index';
 import * as Pieces from 'classes/Pieces';
 import {
   PlayerAlliance,
@@ -7,14 +9,45 @@ import {
 } from 'classes/index';
 export type BoardType = [Tile []];
 export default class Board {
-  configuration: BoardType;
-  pieces: string [];
+  private configuration: BoardType;
+  private moveMaker: PlayerAlliance;
+  private whitePlayer: Player;
+  private blackPlayer: Player;
   constructor() {
     this.configuration = this.createEmpties();
     this.initialBoard();
+    this.moveMaker = PlayerAlliance.WHITE;
+    this.whitePlayer = new Player(this, PlayerAlliance.WHITE, PlayerType.HUMAN);
+    this.blackPlayer = new Player(this, PlayerAlliance.BLACK, PlayerType.CPU);
   }
   getBoardConfiguration(): BoardType {
     return this.configuration;
+  }
+  getPlayerTurn(): PlayerAlliance {
+    return this.moveMaker;
+  }
+  getPlayerLegalMoves(player: Player) {
+    //
+  }
+  getBoardValue(): number {
+    const sum = this.configuration.reduce((rowMemo: number, row: Tile []) => {
+      return rowMemo + row.reduce((colMemo: number, tile: Tile) => {
+        const piece = tile.getPiece();
+        const points = piece ? piece.getPoints() : 0;
+        return colMemo + points;
+      }, 0);
+    }, 0);
+    return sum;
+  }
+  getCurrentPlayer(): Player {
+    return this.getPlayerTurn() === PlayerAlliance.WHITE ? 
+      this.whitePlayer :
+      this.blackPlayer;
+  }
+  switchTurn(piece: Piece) {
+    this.moveMaker = piece.isWhite() ?
+    PlayerAlliance.BLACK :
+    PlayerAlliance.WHITE;
   }
   removePieceOnTile(tile: Tile) {
     const coordinates: TileCoordinate = tile.getCoordinates();
@@ -26,12 +59,13 @@ export default class Board {
     });
   }
   makeMove(from: Tile, to: Tile, moves: TileCoordinate []): BoardType {
-    // const previousTileCoordinate: TileCoordinate = from.getCoordinates();
     const legalMove = _.find(moves, (move: TileCoordinate) => {
-      return move.col === to.getCoordinates().col && to.getCoordinates().row && move.row;
+      return move.col === to.getCoordinates().col
+        && to.getCoordinates().row === move.row;
     });
     const pieceOnTile = from.getPiece();
     if (legalMove && pieceOnTile) {
+      this.switchTurn(pieceOnTile);
       const tileCoordinates = to.getCoordinates();
       pieceOnTile.pieceHasMoved();
       pieceOnTile.setPosition(tileCoordinates);
@@ -39,6 +73,7 @@ export default class Board {
       this.setPiece(tileCoordinates, new OccupiedTile(tileCoordinates, pieceOnTile));
     }
     this.clearHighlights(moves);
+    console.log(this.getBoardValue());
     return this.configuration;
   }
   createEmpties(): BoardType {

@@ -3,7 +3,7 @@ import {
   TileCoordinate,
 } from 'classes/index';
 import Board, { BoardType } from 'classes/Board';
-import Tile from 'classes/Tile';
+import Tile from 'classes/Board/Tile';
 import {
   ChessGrid
 } from 'components/styled';
@@ -70,7 +70,7 @@ export default class ChessBoard extends Component<Props, State> {
         });
     } else {
         const piece = tile.getPiece();
-        if (piece) {
+        if (piece && piece.color === this.board.getPlayerTurn()) {
           const legalMoves = piece.calculateLegalMoves(this.board);
           this.highlightLegalBlocks(legalMoves);
           this.setState({

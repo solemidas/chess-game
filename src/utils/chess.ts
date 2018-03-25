@@ -3,9 +3,9 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board';
-import Tile from 'classes/Tile';
-import Piece from 'classes/Piece';
+import Board from 'classes/Board/index';
+import Tile from 'classes/Board/Tile';
+import Piece from 'classes/Piece/index';
 export interface Change {
   drow: number;
   dcol: number;
@@ -133,21 +133,32 @@ export function getValidMoves(
     const move = candidateMoves[i];
     const tile = board.getTile(move);
     const pieceOnTile = tile.getPiece();
-    if (pieceOnTile && pieceOnTile.color !== piece.color && allowMove(tile, action)) {
-      const previousMove = moves[i - 1];
-      if (previousMove) {
-        const previousTile = board.getTile(previousMove);
+    const conitnueSearching = (previousCoordinate: TileCoordinate): boolean => {
+      let goAhead = true;
+      if (previousCoordinate) {
+        const previousTile = board.getTile(previousCoordinate);
         const pieceOnPreviousTile = previousTile.getPiece();
-        if (pieceOnPreviousTile && pieceOnPreviousTile.color === pieceOnTile.color) {
-          break;
+        if (pieceOnPreviousTile) {
+          goAhead = false;
         } else {
           moves.push(move);
         }
       } else {
         moves.push(move);
       }
+      return goAhead;
+    };
+    const previousMove = moves[i - 1];
+    if (pieceOnTile && pieceOnTile.color !== piece.color && allowMove(tile, action)) {
+      const goAhead = conitnueSearching(previousMove);
+      if (!goAhead) {
+        break;
+      }
     } else if (!pieceOnTile && allowMove(tile, action)) {
-      moves.push(move);
+      const goAhead = conitnueSearching(previousMove);
+      if (!goAhead) {
+        break;
+      }
     } else {
       break;
     }

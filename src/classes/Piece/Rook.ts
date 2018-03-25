@@ -3,18 +3,14 @@ import {
   TileCoordinate,
   MoveDirection,
 } from 'classes/index';
-import Board from 'classes/Board';
-import Piece, { PieceName } from 'classes/Piece';
+import Board from 'classes/Board/index';
+import Piece, { PieceName } from 'classes/Piece/index';
 import {
   nonKnightMoves
 } from 'utils/chess';
-export default class Queen extends Piece {
+export default class Rook extends Piece {
   static getDirections(): MoveDirection [] {
     return [
-      MoveDirection.TOP_LEFT,
-      MoveDirection.TOP_RIGHT,
-      MoveDirection.BOTTOM_LEFT,
-      MoveDirection.BOTTOM_RIGHT,
       MoveDirection.UP,
       MoveDirection.DOWN,
       MoveDirection.LEFT,
@@ -22,12 +18,12 @@ export default class Queen extends Piece {
     ];
   }
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
-    super(alliance, position);
+    super(alliance, position, 50);
   }
   calculateLegalMoves(board: Board): TileCoordinate [] {
-    return nonKnightMoves(this, board, 8, Queen.getDirections());
+    return nonKnightMoves(this, board, 8, Rook.getDirections());
   }
   getName(): PieceName {
-    return PieceName.Queen;
+    return PieceName.Rook;
   }
 }

@@ -1,5 +1,5 @@
 
-import Board from 'classes/Board';
+import Board from 'classes/Board/index';
 import {
   PlayerAlliance,
   TileCoordinate,
@@ -15,10 +15,12 @@ export enum PieceName {
 export default abstract class Piece {
   protected alliance: PlayerAlliance;
   protected position: TileCoordinate;
+  protected points: number;
   protected moved: boolean;
-  constructor(alliance: PlayerAlliance, position: TileCoordinate) {
+  constructor(alliance: PlayerAlliance, position: TileCoordinate, points: number) {
     this.alliance = alliance;
     this.position = position;
+    this.points = this.isWhite() ? points : -points; 
     this.moved = false;
   }
 
@@ -31,7 +33,9 @@ export default abstract class Piece {
   setPosition(position: TileCoordinate) {
     this.position = position;
   }
-
+  getPoints(): number {
+    return this.points;
+  }
   getPosition() {
     return this.position;
   }
@@ -40,6 +44,9 @@ export default abstract class Piece {
   }
   hasMoved(): boolean {
     return this.moved;
+  }
+  isKing(): boolean {
+    return this.getName() === PieceName.King;
   }
   abstract calculateLegalMoves(board: Board): TileCoordinate [];
   abstract getName(): PieceName;

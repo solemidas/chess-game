@@ -1,7 +1,7 @@
 
 import * as React from 'react';
 import * as ChessPieces from 'components/ChessPieces';
-import Tile from 'classes/Tile';
+import Tile from 'classes/Board/Tile';
 import {
   ChessTile as TileView,
 } from 'components/styled';
