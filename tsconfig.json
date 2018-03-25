@@ -20,6 +20,7 @@
     "skipLibCheck": false,
     "paths": {
         "assets/*": ["src/assets/*"],
+        "utils/*": ["src/utils/*"],
         "classes/*": ["src/classes/*"],
         "components/*": ["src/components/*"],
         "constants/*": ["src/constants/*"],

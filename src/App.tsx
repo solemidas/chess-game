@@ -1,11 +1,11 @@
 import * as React from 'react';
 import 'AppCss';
-import Board from 'components/Board';
+import Chess from 'components/Chess';
 
 class App extends React.Component {
   render() {
     return (
-      <Board/>
+      <Chess/>
     );
   }
 }

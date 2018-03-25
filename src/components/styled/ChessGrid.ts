@@ -25,7 +25,7 @@ export const ChessGrid = styled.div`
   grid-template-columns: repeat(8, 1fr);
 `;
 
-export const ChessCell = styled.div`
+export const ChessTile = styled.div`
   background-color: ${(props: CellProps) => {
     const {
       black,
