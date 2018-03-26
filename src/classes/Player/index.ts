@@ -2,23 +2,18 @@ import Board from 'classes/Board/index';
 import Tile from 'classes/Board/Tile';
 import {
   PlayerAlliance,
-  TileCoordinate
 } from 'classes/index';
-import Piece from 'classes/Piece/index';
 export enum PlayerType {
   CPU,
   HUMAN
 }
 
-interface Move {
-  piece: Piece;
-  moves: TileCoordinate [];
-}
+import Move from 'classes/Board/Move';
 export default class Player {
-  private alliance: PlayerAlliance;
-  private playerType: PlayerType;
+  private readonly alliance: PlayerAlliance;
+  private readonly playerType: PlayerType;
   private opponent: Player;
-  private board: Board;
+  private readonly board: Board;
   constructor(board: Board, alliance: PlayerAlliance, playerType: PlayerType) {
     this.alliance = alliance;
     this.playerType = playerType;
@@ -46,15 +41,12 @@ export default class Player {
   }
   // TODO 
   getLegalMoves(): Move [] {
-    const moves: Move [] = [];
+    let moves: Move [] = [];
     this.board.getBoardConfiguration().forEach((row: Tile []) => {
       row.forEach((tile: Tile) => {
         const pieceOnTile = tile.getPiece();
         if (pieceOnTile) {
-          moves.push({
-            moves: pieceOnTile.calculateLegalMoves(this.board),
-            piece: pieceOnTile
-          });
+          moves = pieceOnTile.calculateLegalMoves(this.board);
         }
       });
     });

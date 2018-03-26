@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import Tile, { EmptyTile, OccupiedTile } from 'classes/Board/Tile';
+import Move from 'classes/Board/Move';
 import Player, { PlayerType } from 'classes/Player';
 import Piece from 'classes/Piece/index';
 import * as Pieces from 'classes/Pieces';
@@ -13,6 +14,7 @@ export default class Board {
   private moveMaker: PlayerAlliance;
   private whitePlayer: Player;
   private blackPlayer: Player;
+  private previousMove: Move;
   constructor() {
     this.configuration = this.createEmpties();
     this.initialBoard();
@@ -25,6 +27,9 @@ export default class Board {
   }
   getPlayerTurn(): PlayerAlliance {
     return this.moveMaker;
+  }
+  getPreviousMove(): Move {
+    return this.previousMove;
   }
   getPlayerLegalMoves(player: Player) {
     //
@@ -53,24 +58,23 @@ export default class Board {
     const coordinates: TileCoordinate = tile.getCoordinates();
     this.setPiece(coordinates, new EmptyTile(coordinates));
   }
-  clearHighlights(moves: TileCoordinate []) {
-    moves.forEach((move: TileCoordinate) => {
-      this.getTile(move).clearHighlight();
+  clearHighlights(moves: Move []) {
+    moves.forEach((move: Move) => {
+      this.getTile(move.getDestination()).clearHighlight();
     });
   }
-  makeMove(from: Tile, to: Tile, moves: TileCoordinate []): BoardType {
-    const legalMove = _.find(moves, (move: TileCoordinate) => {
-      return move.col === to.getCoordinates().col
-        && to.getCoordinates().row === move.row;
+  setPreviousMove(move: Move) {
+    this.previousMove = move;
+  }
+  makeMove(from: Tile, to: Tile, moves: Move []): BoardType {
+    const legalMove = _.find(moves, (move: Move) => {
+       const destination = move.getDestination();
+      return destination.col === to.getCoordinates().col
+        && to.getCoordinates().row === destination.row;
     });
     const pieceOnTile = from.getPiece();
     if (legalMove && pieceOnTile) {
-      this.switchTurn(pieceOnTile);
-      const tileCoordinates = to.getCoordinates();
-      pieceOnTile.pieceHasMoved();
-      pieceOnTile.setPosition(tileCoordinates);
-      this.removePieceOnTile(from);
-      this.setPiece(tileCoordinates, new OccupiedTile(tileCoordinates, pieceOnTile));
+      legalMove.execute(this);
     }
     this.clearHighlights(moves);
     console.log(this.getBoardValue());

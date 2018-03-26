@@ -3,9 +3,10 @@ import {
   rem,
 } from 'polished';
 import {
-  cloud,
-  midnightBlue,
-  turbo,
+  // turbo,
+  brownTile,
+  creamTile,
+  electronBlue
 } from 'constants/colors';
 
 import {
@@ -30,12 +31,12 @@ export const ChessTile = styled.div`
     const {
       black,
     } = props;
-    const color = black ? midnightBlue : cloud;
+    const color = black ? brownTile : creamTile;
     return color;
   }};
   height: ${rem(cellHeight)};
   width: ${rem(cellWidth)};
   -webkit-box-shadow: ${(props: CellProps) => {
-    return props.highlight ? `inset 0 0 60px ${turbo}` : 'none';
+    return props.highlight ? `inset 0 0 60px ${electronBlue}` : 'none';
   }};
 `;

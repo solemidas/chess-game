@@ -1,11 +1,11 @@
 import {
-  TileCoordinate,
   MoveDirection,
   Action
 } from 'classes/index';
 import Board from 'classes/Board/index';
 import Tile from 'classes/Board/Tile';
 import Piece from 'classes/Piece/index';
+import Move from 'classes/Board/Move';
 export interface Change {
   drow: number;
   dcol: number;
@@ -63,20 +63,18 @@ export function getDirectionChange(moveDirection: MoveDirection): Change {
   };
 }
 
-export function getDirectionMoves(position: TileCoordinate, moveDirection: MoveDirection): TileCoordinate [] {
-  const moves: TileCoordinate [] = [];
+export function getDirectionMoves(piece: Piece, moveDirection: MoveDirection): Move [] {
+  const moves: Move [] = [];
   const change: Change = getDirectionChange(moveDirection);
   let {
     row,
     col,
-  } = position;
+  } = piece.getPosition();
   while (true) {
     row += change.drow;
     col += change.dcol;
     if (change.isValid(row, col)) {
-      moves.push({
-        row, col
-      });
+      moves.push(new Move(piece, {row, col}));
     } else {
       break;
     }
@@ -121,22 +119,22 @@ export function allowMove(tile: Tile, action: Action): boolean {
 export function getValidMoves(
   piece: Piece,
   board: Board,
-  candidateMoves: TileCoordinate [],
+  candidateMoves: Move [],
   block: number,
   action: Action
-): TileCoordinate [] {
-  const moves: TileCoordinate [] = [];
+): Move [] {
+  const moves: Move [] = [];
   candidateMoves.splice(block);
 
   let n = candidateMoves.length;
   for (let i = 0; i < n; i ++ ) {
     const move = candidateMoves[i];
-    const tile = board.getTile(move);
+    const tile = board.getTile(move.getDestination());
     const pieceOnTile = tile.getPiece();
-    const conitnueSearching = (previousCoordinate: TileCoordinate): boolean => {
+    const conitnueSearching = (previousCoordinate: Move): boolean => {
       let goAhead = true;
       if (previousCoordinate) {
-        const previousTile = board.getTile(previousCoordinate);
+        const previousTile = board.getTile(previousCoordinate.getDestination());
         const pieceOnPreviousTile = previousTile.getPiece();
         if (pieceOnPreviousTile) {
           goAhead = false;
@@ -171,11 +169,11 @@ export function nonKnightMoves(
   board: Board,
   blocks: number,
   directions: MoveDirection []
-): TileCoordinate [] {
+): Move [] {
 
-  let moves: TileCoordinate [] = [];
+  let moves: Move [] = [];
   directions.forEach((direction: MoveDirection) => {
-    const movesInDirection = getDirectionMoves(piece.getPosition(), direction);
+    const movesInDirection = getDirectionMoves(piece, direction);
     moves = [
       ...moves,
       ...getValidMoves(

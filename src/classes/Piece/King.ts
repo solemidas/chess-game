@@ -1,5 +1,6 @@
 import Board from 'classes/Board/index';
 import Piece, { PieceName } from 'classes/Piece/index';
+import Move from 'classes/Board/Move';
 import {
   PlayerAlliance,
   TileCoordinate,
@@ -24,7 +25,7 @@ export default class King extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
     super(alliance, position, 900);
   }
-  calculateLegalMoves(board: Board): TileCoordinate [] {
+  calculateLegalMoves(board: Board): Move [] {
     return nonKnightMoves(this, board, 1, King.getDirections());
   }
   getName(): PieceName {

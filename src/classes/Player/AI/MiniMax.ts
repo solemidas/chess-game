@@ -15,7 +15,7 @@ export default class MiniMax extends Strategy {
     };
   }
   evaluate(board: Board): number {
-    return 0;
+    return board.getBoardValue();
   }
   min(board: Board, depth: number): number {
     if (depth === 0) {

@@ -5,6 +5,7 @@ import {
   Action
 } from 'classes/index';
 import Board from 'classes/Board/index';
+import Move from 'classes/Board/Move';
 import Piece, { PieceName } from 'classes/Piece/index';
 import {
   getValidMoves,
@@ -26,12 +27,12 @@ export default class Pawn extends Piece {
     }
     return MoveDirection.DOWN;
   }
-  calculateLegalMoves(board: Board): TileCoordinate [] {
-    let diagonalMoves: TileCoordinate [] = [];
-    let verticalMoves: TileCoordinate [] = [];
+  calculateLegalMoves(board: Board): Move [] {
+    let diagonalMoves: Move [] = [];
+    let verticalMoves: Move [] = [];
     const diagonalDirections: MoveDirection [] = this.getDiagonalDirections();
     diagonalDirections.forEach((direction: MoveDirection) => {
-      const diagonals = getDirectionMoves(this.position, direction);
+      const diagonals = getDirectionMoves(this, direction);
       diagonalMoves = [
         ...diagonalMoves,
         ...getValidMoves(this, board, diagonals, 1, Action.CAPTURE)
@@ -39,13 +40,40 @@ export default class Pawn extends Piece {
     });
     const verticalDirection: MoveDirection = this.getVerticalDirection();
     const blocks = this.hasMoved() ? 1 : 2;
-    let verticals = getDirectionMoves(this.position, verticalDirection);
+    let verticals = getDirectionMoves(this, verticalDirection);
     verticalMoves = getValidMoves(this, board, verticals, blocks, Action.NORMAL);
-    let moves: TileCoordinate [] = [
+    const enPassantMove = this.enPassant(board);
+    if (enPassantMove) {
+      diagonalMoves.push(enPassantMove);
+    }
+    let moves: Move [] = [
       ...diagonalMoves,
       ...verticalMoves
-    ]; 
+    ];
     return moves;
+  }
+  enPassant(board: Board): Move | null {
+    const previousMove = board.getPreviousMove();
+    if (previousMove) {
+      const movedPiece = previousMove.getMovedPiece();
+      const isPawn = movedPiece.getName() === PieceName.Pawn;
+      if (isPawn) {
+        const destination = previousMove.getDestination();
+        if (destination.row === this.getPosition().row
+          && previousMove.getMovedPiece().getDistance() === 2
+          && previousMove.getMovedPiece().getMoves() === 1
+        ) {
+          const verticalDirection: MoveDirection = this.getVerticalDirection();
+          let vertical = getDirectionMoves(this, verticalDirection)[0];
+          const tileBehind: TileCoordinate = {
+            col: destination.col,
+            row: vertical.getDestination().row
+          };
+          return new Move(this, tileBehind, board.getTile(destination));
+        }
+      }
+    }
+    return null;
   }
   getName(): PieceName {
     return PieceName.Pawn;

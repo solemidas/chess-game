@@ -1,7 +1,5 @@
 import * as React from 'react';
-import {
-  TileCoordinate,
-} from 'classes/index';
+import Move from 'classes/Board/Move';
 import Board, { BoardType } from 'classes/Board';
 import Tile from 'classes/Board/Tile';
 import {
@@ -20,7 +18,7 @@ interface Props {
 
 interface State {
   boardConfiguration: BoardType;
-  moves: TileCoordinate [];
+  moves: Move [];
   from?: Tile;
 }
 
@@ -38,14 +36,14 @@ export default class ChessBoard extends Component<Props, State> {
       boardConfiguration: this.board.getBoardConfiguration(),
     };
   }
-  clearHighlitedBlocks(moves: TileCoordinate []) {
-    moves.forEach((move: TileCoordinate) => {
-      this.board.getTile(move).clearHighlight();
+  clearHighlitedBlocks(moves: Move []) {
+    moves.forEach((move: Move) => {
+      this.board.getTile(move.getDestination()).clearHighlight();
     });
   }
-  highlightLegalBlocks(moves: TileCoordinate []) {
-    moves.forEach((move: TileCoordinate) => {
-      this.board.getTile(move).highlightTile();
+  highlightLegalBlocks(moves: Move []) {
+    moves.forEach((move: Move) => {
+      this.board.getTile(move.getDestination()).highlightTile();
     });
   }
 

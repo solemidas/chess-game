@@ -5,6 +5,7 @@ import {
 } from 'classes/index';
 import Board from 'classes/Board/index';
 import Piece, { PieceName } from 'classes/Piece/index';
+import Move from 'classes/Board/Move';
 import {
   nonKnightMoves
 } from 'utils/chess';
@@ -24,7 +25,7 @@ export default class Queen extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
     super(alliance, position, 90);
   }
-  calculateLegalMoves(board: Board): TileCoordinate [] {
+  calculateLegalMoves(board: Board): Move [] {
     return nonKnightMoves(this, board, 8, Queen.getDirections());
   }
   getName(): PieceName {
