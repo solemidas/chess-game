@@ -32,7 +32,7 @@ export default class Pawn extends Piece {
     let verticalMoves: Move [] = [];
     const diagonalDirections: MoveDirection [] = this.getDiagonalDirections();
     diagonalDirections.forEach((direction: MoveDirection) => {
-      const diagonals = getDirectionMoves(this, direction);
+      const diagonals = getDirectionMoves(board, this, direction);
       diagonalMoves = [
         ...diagonalMoves,
         ...getValidMoves(this, board, diagonals, 1, Action.CAPTURE)
@@ -40,7 +40,7 @@ export default class Pawn extends Piece {
     });
     const verticalDirection: MoveDirection = this.getVerticalDirection();
     const blocks = this.hasMoved() ? 1 : 2;
-    let verticals = getDirectionMoves(this, verticalDirection);
+    let verticals = getDirectionMoves(board, this, verticalDirection);
     verticalMoves = getValidMoves(this, board, verticals, blocks, Action.NORMAL);
     const enPassantMove = this.enPassant(board);
     if (enPassantMove) {
@@ -64,7 +64,7 @@ export default class Pawn extends Piece {
           && previousMove.getMovedPiece().getMoves() === 1
         ) {
           const verticalDirection: MoveDirection = this.getVerticalDirection();
-          let vertical = getDirectionMoves(this, verticalDirection)[0];
+          let vertical = getDirectionMoves(board, this, verticalDirection)[0];
           const tileBehind: TileCoordinate = {
             col: destination.col,
             row: vertical.getDestination().row

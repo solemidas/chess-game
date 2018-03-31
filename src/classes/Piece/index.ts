@@ -53,11 +53,13 @@ export default abstract class Piece {
     return this.position;
   }
   pieceHasMoved(): void {
-    this.moved = true;
     this.moves = this.moves + 1;
   }
+  undoMove(): void {
+    this.moves = this.moves - 1;
+  }
   hasMoved(): boolean {
-    return this.moved;
+    return this.moves > 0;
   }
   isKing(): boolean {
     return this.getName() === PieceName.King;

@@ -63,7 +63,7 @@ export function getDirectionChange(moveDirection: MoveDirection): Change {
   };
 }
 
-export function getDirectionMoves(piece: Piece, moveDirection: MoveDirection): Move [] {
+export function getDirectionMoves(board: Board, piece: Piece, moveDirection: MoveDirection): Move [] {
   const moves: Move [] = [];
   const change: Change = getDirectionChange(moveDirection);
   let {
@@ -73,8 +73,12 @@ export function getDirectionMoves(piece: Piece, moveDirection: MoveDirection): M
   while (true) {
     row += change.drow;
     col += change.dcol;
+    const destination = {
+      row,
+      col,
+    };
     if (change.isValid(row, col)) {
-      moves.push(new Move(piece, {row, col}));
+      moves.push(new Move(piece, destination, board.getTile(destination)));
     } else {
       break;
     }
@@ -173,7 +177,7 @@ export function nonKnightMoves(
 
   let moves: Move [] = [];
   directions.forEach((direction: MoveDirection) => {
-    const movesInDirection = getDirectionMoves(piece, direction);
+    const movesInDirection = getDirectionMoves(board, piece, direction);
     moves = [
       ...moves,
       ...getValidMoves(

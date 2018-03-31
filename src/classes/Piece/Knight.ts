@@ -29,13 +29,17 @@ export default class Knight extends Piece {
     if (pieceOnTile) {
       other.forEach((direction: MoveDirection) => {
         getDiagonalChanges(direction).forEach((change: Change) => {
-          const moveInDirection = getDirectionMoves(this, direction)[0];
+          const moveInDirection = getDirectionMoves(board, this, direction)[0];
           if (moveInDirection) {
             let { row, col } = moveInDirection.getDestination();
             row += change.drow;
             col += change.dcol;
-            const move: Move = new Move(this, {row, col});
+            const destination = {
+              row,
+              col,
+            };
             if (change.isValid(row, col)) {
+              const move: Move = new Move(this, destination, board.getTile(destination));
               moves = [...moves, ...getValidMoves(this, board, [ move ], 1, Action.ALLOW_BOTH)];
             }
           }

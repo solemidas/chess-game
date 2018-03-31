@@ -14,10 +14,11 @@ export default class Board {
   private moveMaker: PlayerAlliance;
   private whitePlayer: Player;
   private blackPlayer: Player;
-  private previousMove: Move;
+  private history: Move [];
   constructor() {
     this.configuration = this.createEmpties();
     this.initialBoard();
+    this.history = [];
     this.moveMaker = PlayerAlliance.WHITE;
     this.whitePlayer = new Player(this, PlayerAlliance.WHITE, PlayerType.HUMAN);
     this.blackPlayer = new Player(this, PlayerAlliance.BLACK, PlayerType.CPU);
@@ -29,7 +30,8 @@ export default class Board {
     return this.moveMaker;
   }
   getPreviousMove(): Move {
-    return this.previousMove;
+    const n = this.history.length;
+    return this.history[n - 1];
   }
   getPlayerLegalMoves(player: Player) {
     //
@@ -54,17 +56,24 @@ export default class Board {
     PlayerAlliance.BLACK :
     PlayerAlliance.WHITE;
   }
+  undoTurn(piece: Piece) {
+    this.moveMaker = piece.isWhite() ?
+    PlayerAlliance.WHITE :
+    PlayerAlliance.BLACK;
+  }
   removePieceOnTile(tile: Tile) {
     const coordinates: TileCoordinate = tile.getCoordinates();
     this.setPiece(coordinates, new EmptyTile(coordinates));
   }
-  clearHighlights(moves: Move []) {
-    moves.forEach((move: Move) => {
-      this.getTile(move.getDestination()).clearHighlight();
+  clearHighlights() {
+    this.configuration.forEach((row) => {
+      row.forEach((tile) => {
+        tile.clearHighlight();
+      });
     });
   }
   setPreviousMove(move: Move) {
-    this.previousMove = move;
+    this.history.push(move);
   }
   makeMove(from: Tile, to: Tile, moves: Move []): BoardType {
     const legalMove = _.find(moves, (move: Move) => {
@@ -76,10 +85,29 @@ export default class Board {
     if (legalMove && pieceOnTile) {
       legalMove.execute(this);
     }
-    this.clearHighlights(moves);
+    this.clearHighlights();
     console.log(this.getBoardValue());
     return this.configuration;
   }
+  undoMove() {
+    const move: Move = this.getPreviousMove();
+    if (move) {
+      const piece = move.getMovedPiece();
+      const fromLocation = move.getPiecePosition();
+      const destination = move.getDestination();
+      const from = this.getTile(destination);
+      const capturedTile = move.getCapturedTile();
+      this.history.pop();
+      this.undoTurn(piece);
+      piece.undoMove();
+      piece.setPosition(fromLocation);
+      this.removePieceOnTile(from);
+      this.setPiece(fromLocation, new OccupiedTile(fromLocation, piece));
+      this.setPiece(capturedTile.getCoordinates(), capturedTile);
+    }
+    this.clearHighlights();
+    return this.configuration;
+}
   createEmpties(): BoardType {
     // @ts-ignore
     const board: BoardType = [];

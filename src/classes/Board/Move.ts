@@ -6,14 +6,19 @@ export default class Move {
   private readonly piece: Piece;
   private readonly destination: TileCoordinate;
   private readonly fromLocation: TileCoordinate;
-  private readonly capture: Tile | undefined;
-  constructor(piece: Piece, destination: TileCoordinate, capture?: Tile) {
+  private readonly capture: Tile;
+  constructor(piece: Piece, destination: TileCoordinate, capture: Tile) {
     this.piece = piece;
     this.fromLocation = piece.getPosition();
     this.destination = destination;
     this.capture = capture;
   }
-
+  getCapturedTile(): Tile {
+    return this.capture;
+  }
+  getPiecePosition(): TileCoordinate {
+    return this.fromLocation;
+  }
   getDestination(): TileCoordinate {
     return this.destination;
   }
@@ -28,7 +33,7 @@ export default class Move {
       this.piece.addDistance(this.getDistance());
       this.piece.setPosition(tileCoordinates);
       board.removePieceOnTile(from);
-      board.setPreviousMove(new Move(this.piece, tileCoordinates));
+      board.setPreviousMove(this);
       this.capturePiece(board);
       board.setPiece(tileCoordinates, new OccupiedTile(tileCoordinates, this.piece));
   }

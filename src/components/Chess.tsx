@@ -30,11 +30,33 @@ export default class ChessBoard extends Component<Props, State> {
     this.handleBoardClick = this.handleBoardClick.bind(this);
     this.highlightLegalBlocks = this.highlightLegalBlocks.bind(this);
     this.clearHighlitedBlocks = this.clearHighlitedBlocks.bind(this);
+    this.keypressHandler = this.keypressHandler.bind(this);
     this.board = new Board();
     this.state = {
       moves: [],
       boardConfiguration: this.board.getBoardConfiguration(),
     };
+  }
+  componentWillMount() {
+    addEventListener('keypress', this.keypressHandler);
+  }
+
+  componentWillUnmount() {
+    removeEventListener('keypress', this.keypressHandler);
+  }
+  keypressHandler(event: KeyboardEvent) {
+  switch (event.key.toLocaleLowerCase()) {
+    case 'u':
+      const boardConfiguration = this.board.undoMove();
+      this.setState({
+        boardConfiguration,
+        moves: [],
+        from: undefined,
+      });
+      break;
+    default:
+      break;
+  }
   }
   clearHighlitedBlocks(moves: Move []) {
     moves.forEach((move: Move) => {
@@ -60,7 +82,7 @@ export default class ChessBoard extends Component<Props, State> {
         from: undefined,
       });
     } else if (tile === from) {
-        this.board.clearHighlights(moves);
+        this.board.clearHighlights();
         this.setState({
           moves: [],
           from: undefined,
