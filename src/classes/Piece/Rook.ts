@@ -3,8 +3,8 @@ import {
   TileCoordinate,
   MoveDirection,
 } from 'classes/index';
-import Board from 'classes/Board/index';
-import Piece, { PieceName } from 'classes/Piece/index';
+import Board from 'classes/Board';
+import Piece, { PieceName } from 'classes/Piece';
 import Move from 'classes/Board/Move';
 import {
   nonKnightMoves

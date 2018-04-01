@@ -1,5 +1,5 @@
 
-import Board from 'classes/Board/index';
+import Board from 'classes/Board';
 import Move from 'classes/Board/Move';
 import {
   PlayerAlliance,

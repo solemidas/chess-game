@@ -3,6 +3,9 @@ import Move from 'classes/Board/Move';
 import Board, { BoardType } from 'classes/Board';
 import Tile from 'classes/Board/Tile';
 import {
+  List
+} from 'immutable';
+import {
   ChessGrid
 } from 'components/styled';
 
@@ -20,10 +23,14 @@ interface State {
   boardConfiguration: BoardType;
   moves: Move [];
   from?: Tile;
-}
-
-export default class ChessBoard extends Component<Props, State> {
   board: Board;
+}
+interface Play {
+  from: Tile;
+  to: Tile;
+  moves: Move [];
+}
+export default class ChessBoard extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.renderChessCells = this.renderChessCells.bind(this);
@@ -31,70 +38,99 @@ export default class ChessBoard extends Component<Props, State> {
     this.highlightLegalBlocks = this.highlightLegalBlocks.bind(this);
     this.clearHighlitedBlocks = this.clearHighlitedBlocks.bind(this);
     this.keypressHandler = this.keypressHandler.bind(this);
-    this.board = new Board();
+    const board = new Board();
     this.state = {
       moves: [],
-      boardConfiguration: this.board.getBoardConfiguration(),
+      boardConfiguration: board.getBoardConfiguration(),
+      board,
     };
   }
   componentWillMount() {
     addEventListener('keypress', this.keypressHandler);
+    addEventListener('makeMove', this.cpuPlay);
   }
-
+  cpuPlay(event: CustomEvent<Play>) {
+    const { detail } = event;
+    this.play(detail.from, detail.to, detail.moves);
+  }
   componentWillUnmount() {
     removeEventListener('keypress', this.keypressHandler);
+    removeEventListener('makeMove', this.cpuPlay);
   }
   keypressHandler(event: KeyboardEvent) {
-  switch (event.key.toLocaleLowerCase()) {
-    case 'u':
-      const boardConfiguration = this.board.undoMove();
-      this.setState({
-        boardConfiguration,
-        moves: [],
-        from: undefined,
-      });
-      break;
-    default:
-      break;
-  }
+    const { board } = this.state;
+    switch (event.key.toLocaleLowerCase()) {
+      case 'u':
+        const newBoard = board.undoMove();
+        const boardConfiguration = newBoard.getBoardConfiguration();
+        this.setState({
+          boardConfiguration,
+          board: newBoard,
+          moves: [],
+          from: undefined,
+        });
+        break;
+      default:
+        break;
+    }
   }
   clearHighlitedBlocks(moves: Move []) {
+    let { board, boardConfiguration } = this.state;
     moves.forEach((move: Move) => {
-      this.board.getTile(move.getDestination()).clearHighlight();
+      const destination = move.getDestination();
+      const tile = board.getTile(destination).clearHighlight();
+      boardConfiguration = board.setPiece(boardConfiguration, destination, tile);
+    });
+
+    this.setState({
+      boardConfiguration,
+      board: new Board(board, boardConfiguration)
     });
   }
   highlightLegalBlocks(moves: Move []) {
+    const { board } = this.state;
     moves.forEach((move: Move) => {
-      this.board.getTile(move.getDestination()).highlightTile();
+      board.getTile(move.getDestination()).highlightTile();
     });
   }
-
+  play(from: Tile, to: Tile, moves: Move []) {
+    const { board } = this.state;
+    const moveTransition = board.makeMove(from, to, moves);
+    if (moveTransition) {
+      const toBoard = moveTransition.getToBoard();
+      const boardConfiguration = toBoard.getBoardConfiguration();
+      this.setState({
+        boardConfiguration: boardConfiguration,
+        moves: [],
+        from: undefined,
+        board: toBoard,
+      }, () => {
+          this.clearHighlitedBlocks(moves);
+        });
+      }
+  }
   handleBoardClick(tile: Tile) {
     const {
       moves,
-      from
+      from,
+      board
     } = this.state;
     if (moves.length > 0 && from && tile !== from) {
-      const boardConfiguration = this.board.makeMove(from, tile, moves);
-      this.setState({
-        boardConfiguration,
-        moves: [],
-        from: undefined,
-      });
+      this.play(from, tile, moves);
     } else if (tile === from) {
-        this.board.clearHighlights();
+        const boardConfiguration = board.clearHighlights(board.getBoardConfiguration());
         this.setState({
           moves: [],
           from: undefined,
-          boardConfiguration: this.board.getBoardConfiguration()
+          boardConfiguration,
         });
     } else {
         const piece = tile.getPiece();
-        if (piece && piece.color === this.board.getPlayerTurn()) {
-          const legalMoves = piece.calculateLegalMoves(this.board);
+        if (piece && piece.color === board.getPlayerTurn()) {
+          const legalMoves = piece.calculateLegalMoves(board);
           this.highlightLegalBlocks(legalMoves);
           this.setState({
-            boardConfiguration: this.board.getBoardConfiguration(),
+            boardConfiguration: board.getBoardConfiguration(),
             moves: legalMoves,
             from: tile
           });
@@ -103,7 +139,7 @@ export default class ChessBoard extends Component<Props, State> {
   }
   renderChessCells() {
     const { boardConfiguration } = this.state;
-    return boardConfiguration.map((row: Tile [], i: number) => {
+    return boardConfiguration.map((row: List<Tile>, i: number) => {
       return row.map((tile: Tile, j: number) => {
         return (
           <ChessTile

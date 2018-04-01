@@ -1,4 +1,4 @@
-import Piece from 'classes/Piece/index';
+import Piece from 'classes/Piece';
 import {
   TileCoordinate,
 } from 'classes/index';
@@ -13,8 +13,9 @@ export default abstract class Tile {
     this.highlight = true;
   }
 
-  clearHighlight() {
+  clearHighlight(): Tile {
     this.highlight = false;
+    return this;
   }
   getCoordinates(): TileCoordinate {
     return this.position;

@@ -6,7 +6,8 @@ import {
   // turbo,
   brownTile,
   creamTile,
-  electronBlue
+  electronBlue,
+  turbo
 } from 'constants/colors';
 
 import {
@@ -16,6 +17,7 @@ import {
 export interface CellProps {
   black?: boolean;
   highlight?: boolean;
+  isCheck?: boolean;
 }
 
 export const ChessGrid = styled.div`
@@ -37,6 +39,8 @@ export const ChessTile = styled.div`
   height: ${rem(cellHeight)};
   width: ${rem(cellWidth)};
   -webkit-box-shadow: ${(props: CellProps) => {
-    return props.highlight ? `inset 0 0 60px ${electronBlue}` : 'none';
+    const { isCheck, highlight } = props;
+    const color = isCheck ? turbo : electronBlue;
+    return highlight ? `inset 0 0 60px ${color}` : 'none';
   }};
 `;

@@ -4,9 +4,9 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board/index';
+import Board from 'classes/Board';
 import Move from 'classes/Board/Move';
-import Piece, { PieceName } from 'classes/Piece/index';
+import Piece, { PieceName } from 'classes/Piece';
 import {
   getValidMoves,
   getDirectionMoves,
@@ -53,8 +53,9 @@ export default class Pawn extends Piece {
     return moves;
   }
   enPassant(board: Board): Move | null {
-    const previousMove = board.getPreviousMove();
-    if (previousMove) {
+    const moveTransition =  board.getPreviousTransition();
+    if (moveTransition) {
+      const previousMove = moveTransition.getTransitionMove();
       const movedPiece = previousMove.getMovedPiece();
       const isPawn = movedPiece.getName() === PieceName.Pawn;
       if (isPawn) {

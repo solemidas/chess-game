@@ -1,5 +1,5 @@
 
-import Board from 'classes/Board/index';
+import Board from 'classes/Board';
 import {
   TileCoordinate,
 } from 'classes/index';

@@ -2,9 +2,9 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board/index';
+import Board from 'classes/Board';
 import Tile from 'classes/Board/Tile';
-import Piece from 'classes/Piece/index';
+import Piece from 'classes/Piece';
 import Move from 'classes/Board/Move';
 export interface Change {
   drow: number;

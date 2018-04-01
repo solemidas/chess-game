@@ -4,7 +4,7 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
-import Board from 'classes/Board/index';
+import Board from 'classes/Board';
 import Move from 'classes/Board/Move';
 import {
   getValidMoves,
@@ -12,7 +12,7 @@ import {
   getDiagonalChanges,
   Change
 } from 'utils/chess';
-import Piece, { PieceName } from 'classes/Piece/index';
+import Piece, { PieceName } from 'classes/Piece';
 export default class Knight extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
     super(alliance, position, 30);

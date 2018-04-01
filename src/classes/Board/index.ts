@@ -1,27 +1,43 @@
 import * as _ from 'lodash';
 import Tile, { EmptyTile, OccupiedTile } from 'classes/Board/Tile';
+import {
+  List
+} from 'immutable';
 import Move from 'classes/Board/Move';
+import MoveTransition from 'classes/Board/MoveTransition';
 import Player, { PlayerType } from 'classes/Player';
-import Piece from 'classes/Piece/index';
 import * as Pieces from 'classes/Pieces';
 import {
   PlayerAlliance,
   TileCoordinate,
 } from 'classes/index';
-export type BoardType = [Tile []];
+export type BoardType = List<List<Tile>>;
 export default class Board {
+  public EMPTY_TILES: BoardType;
   private configuration: BoardType;
   private moveMaker: PlayerAlliance;
   private whitePlayer: Player;
   private blackPlayer: Player;
-  private history: Move [];
-  constructor() {
-    this.configuration = this.createEmpties();
-    this.initialBoard();
-    this.history = [];
-    this.moveMaker = PlayerAlliance.WHITE;
-    this.whitePlayer = new Player(this, PlayerAlliance.WHITE, PlayerType.HUMAN);
-    this.blackPlayer = new Player(this, PlayerAlliance.BLACK, PlayerType.CPU);
+  private history: List<MoveTransition>;
+  constructor(board?: Board, configuration?: BoardType) {
+    if (board && configuration) {
+      const newBoard: Board = Object.create(board);
+      this.configuration = configuration;
+      this.whitePlayer = newBoard.whitePlayer;
+      this.blackPlayer = newBoard.blackPlayer;
+      this.history = newBoard.history;
+      this.moveMaker = newBoard.moveMaker;
+      this.EMPTY_TILES = newBoard.EMPTY_TILES;
+    } else {
+      this.EMPTY_TILES = this.createEmpties();
+      this.configuration = this.initialBoard();
+      this.moveMaker = PlayerAlliance.WHITE;
+      this.whitePlayer = new Player(this, PlayerAlliance.WHITE, PlayerType.HUMAN);
+      this.blackPlayer = new Player(this, PlayerAlliance.BLACK, PlayerType.CPU);
+      this.whitePlayer.setOpponent(this.blackPlayer);
+      this.blackPlayer.setOpponent(this.whitePlayer);
+      this.history = List();
+    }
   }
   getBoardConfiguration(): BoardType {
     return this.configuration;
@@ -29,15 +45,15 @@ export default class Board {
   getPlayerTurn(): PlayerAlliance {
     return this.moveMaker;
   }
-  getPreviousMove(): Move {
-    const n = this.history.length;
-    return this.history[n - 1];
+  getPreviousTransition(): MoveTransition {
+    const n = this.history.size;
+    return this.history.get(n - 1);
   }
   getPlayerLegalMoves(player: Player) {
     //
   }
   getBoardValue(): number {
-    const sum = this.configuration.reduce((rowMemo: number, row: Tile []) => {
+    const sum = this.configuration.reduce((rowMemo: number, row: List<Tile>) => {
       return rowMemo + row.reduce((colMemo: number, tile: Tile) => {
         const piece = tile.getPiece();
         const points = piece ? piece.getPoints() : 0;
@@ -51,93 +67,101 @@ export default class Board {
       this.whitePlayer :
       this.blackPlayer;
   }
-  switchTurn(piece: Piece) {
-    this.moveMaker = piece.isWhite() ?
+  switchTurn(color: PlayerAlliance) {
+    this.moveMaker = color === PlayerAlliance.WHITE ?
     PlayerAlliance.BLACK :
     PlayerAlliance.WHITE;
   }
-  undoTurn(piece: Piece) {
-    this.moveMaker = piece.isWhite() ?
+  undoTurn(color: PlayerAlliance) {
+    this.moveMaker = color === PlayerAlliance.WHITE ?
     PlayerAlliance.WHITE :
     PlayerAlliance.BLACK;
   }
-  removePieceOnTile(tile: Tile) {
+  removePieceOnTile(configuration: BoardType, tile: Tile): BoardType {
     const coordinates: TileCoordinate = tile.getCoordinates();
-    this.setPiece(coordinates, new EmptyTile(coordinates));
+    return this.setPiece(configuration, coordinates, new EmptyTile(coordinates));
   }
-  clearHighlights() {
-    this.configuration.forEach((row) => {
-      row.forEach((tile) => {
+  clearHighlights(configuration: BoardType) {
+    let newConfiguration: BoardType = List();
+    configuration.forEach((row: List<Tile>, i: number) => {
+      let rowTiles: List<Tile> = List();
+      row.forEach((tile: Tile, j: number) => {
         tile.clearHighlight();
+        rowTiles = rowTiles.push(tile);
       });
+      newConfiguration = newConfiguration.push(rowTiles);
     });
+    return newConfiguration;
   }
-  setPreviousMove(move: Move) {
-    this.history.push(move);
+  setPreviousTransition(moveTransition: MoveTransition) {
+    const history = this.history.push(moveTransition);
+    this.history = history;
   }
-  makeMove(from: Tile, to: Tile, moves: Move []): BoardType {
+  makeMove(from: Tile, to: Tile, moves: Move []): MoveTransition {
+    let moveTransition: MoveTransition;
     const legalMove = _.find(moves, (move: Move) => {
        const destination = move.getDestination();
       return destination.col === to.getCoordinates().col
         && to.getCoordinates().row === destination.row;
     });
-    const pieceOnTile = from.getPiece();
-    if (legalMove && pieceOnTile) {
-      legalMove.execute(this);
+    if (legalMove) {
+      moveTransition = legalMove.execute(this);
     }
-    this.clearHighlights();
-    console.log(this.getBoardValue());
-    return this.configuration;
+    // @ts-ignore
+    return moveTransition;
+  }
+  popHistory() {
+    this.history = this.history.pop();
+  }
+  getHistory(): List<MoveTransition> {
+    return this.history;
   }
   undoMove() {
-    const move: Move = this.getPreviousMove();
-    if (move) {
-      const piece = move.getMovedPiece();
-      const fromLocation = move.getPiecePosition();
-      const destination = move.getDestination();
-      const from = this.getTile(destination);
-      const capturedTile = move.getCapturedTile();
-      this.history.pop();
-      this.undoTurn(piece);
-      piece.undoMove();
-      piece.setPosition(fromLocation);
-      this.removePieceOnTile(from);
-      this.setPiece(fromLocation, new OccupiedTile(fromLocation, piece));
-      this.setPiece(capturedTile.getCoordinates(), capturedTile);
+    const transition: MoveTransition = this.getPreviousTransition();
+    let board: Board = this;
+    if (transition) {
+      board = transition.getFromBoard();
+      // board.undoTurn(alliance);
     }
-    this.clearHighlights();
-    return this.configuration;
+    let configuration = board.getBoardConfiguration();
+    configuration = this.clearHighlights(configuration);
+    return board;
 }
   createEmpties(): BoardType {
     // @ts-ignore
-    const board: BoardType = [];
+    let board: BoardType = List();
     for (let i = 0; i < 8; i++) {
-      const row: Tile [] = [];
+      let row: List<Tile> = List();
       for (let j = 0; j < 8; j++) {
-        row.push(new EmptyTile({
+        row = row.push(new EmptyTile({
           row: i,
           col: j
         }));
       }
-      board.push(row);
+      board = board.push(row);
     }
     return board;
   }
-  setPiece(coordinate: TileCoordinate, tile: Tile) {
-    this.configuration[coordinate.row][coordinate.col] = tile;
+  setPiece(configuration: BoardType, coordinate: TileCoordinate, tile: Tile): BoardType {
+    const { row: x, col: y} = coordinate;
+    const row = configuration.get(x);
+    const newRow = row.update(y, () => tile);
+    configuration = configuration.update(x, () => newRow);
+    return configuration;
   }
-  createRooks() {
+  createRooks(configuration: BoardType) {
     const coordinates: number [] = [0, 7];
     coordinates.forEach((i: number) => {
       coordinates.forEach((j: number) => {
         const alliance: PlayerAlliance = i === 0 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const rook = new Pieces.Rook(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, rook));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, rook));
       });
     });
+    return configuration;
   }
-  createKnights() {
+  createKnights(configuration: BoardType) {
     const rows: number [] = [0, 7];
     const columns: number [] = [1, 6];
     rows.forEach((i: number) => {
@@ -145,11 +169,12 @@ export default class Board {
         const alliance: PlayerAlliance = i === 0 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const knight = new Pieces.Knight(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, knight));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, knight));
       });
     });
+    return configuration;
   }
-  createBishops() {
+  createBishops(configuration: BoardType) {
     const rows: number [] = [0, 7];
     const columns: number [] = [2, 5];
     rows.forEach((i: number) => {
@@ -157,11 +182,12 @@ export default class Board {
         const alliance: PlayerAlliance = i === 0 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const bishop = new Pieces.Bishop(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, bishop));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, bishop));
       });
     });
+    return configuration;
   }
-  createQueens() {
+  createQueens(configuration: BoardType) {
     const rows: number [] = [0, 7];
     const columns: number [] = [3];
     rows.forEach((i: number) => {
@@ -169,11 +195,12 @@ export default class Board {
         const alliance: PlayerAlliance = i === 0 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const queen = new Pieces.Queen(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, queen));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, queen));
       });
     });
+    return configuration;
   }
-  createKings() {
+  createKings(configuration: BoardType) {
     const rows: number [] = [0, 7];
     const columns: number [] = [4];
     rows.forEach((i: number) => {
@@ -181,31 +208,34 @@ export default class Board {
         const alliance: PlayerAlliance = i === 0 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const king = new Pieces.King(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, king));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, king));
       });
     });
+    return configuration;
   }
-  createPawns() {
+  createPawns(configuration: BoardType) {
     const rows: number [] = [1, 6];
     rows.forEach((i: number) => {
       for (let j = 0; j < 8 ; j++) {
         const alliance: PlayerAlliance = i === 1 ? PlayerAlliance.WHITE : PlayerAlliance.BLACK;
         const position: TileCoordinate = {row: i, col: j};
         const pawn = new Pieces.Pawn(alliance, position);
-        this.setPiece(position, new OccupiedTile(position, pawn));
+        configuration = this.setPiece(configuration, position, new OccupiedTile(position, pawn));
       }
     });
+    return configuration;
   }
   initialBoard() {
-    this.createRooks();
-    this.createKnights();
-    this.createBishops();
-    this.createQueens();
-    this.createKings();
-    this.createPawns();
+    let configuration = this.createRooks(this.EMPTY_TILES);
+    configuration = this.createKnights(configuration);
+    configuration = this.createBishops(configuration);
+    configuration = this.createQueens(configuration);
+    configuration = this.createKings(configuration);
+    return this.createPawns(configuration);
   }
   getTile(coordinate: TileCoordinate): Tile {
-    return this.configuration[coordinate.row][coordinate.col];
+    const { row, col } = coordinate;
+    return this.configuration.get(row).get(col);
   }
 
 }
