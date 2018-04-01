@@ -24,7 +24,8 @@ export default class MoveTransition {
   }
 
   moveIsDone(): boolean {
-    return !this.toBoard.getCurrentPlayer().getOpponent().isInCheck();
+    const baord = this.getToBoard();
+    return !baord.getCurrentPlayer().getOpponent().isInCheck(baord);
   }
 
 }

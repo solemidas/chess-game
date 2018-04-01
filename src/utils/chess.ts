@@ -2,6 +2,9 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
+import {
+  List
+} from 'immutable';
 import Board from 'classes/Board';
 import Tile from 'classes/Board/Tile';
 import Piece from 'classes/Piece';
@@ -63,8 +66,8 @@ export function getDirectionChange(moveDirection: MoveDirection): Change {
   };
 }
 
-export function getDirectionMoves(board: Board, piece: Piece, moveDirection: MoveDirection): Move [] {
-  const moves: Move [] = [];
+export function getDirectionMoves(board: Board, piece: Piece, moveDirection: MoveDirection): List<Move> {
+  let moves: List<Move> = List();
   const change: Change = getDirectionChange(moveDirection);
   let {
     row,
@@ -78,7 +81,7 @@ export function getDirectionMoves(board: Board, piece: Piece, moveDirection: Mov
       col,
     };
     if (change.isValid(row, col)) {
-      moves.push(new Move(piece, destination, board.getTile(destination)));
+      moves = moves.push(new Move(piece, destination, board.getTile(destination)));
     } else {
       break;
     }
@@ -123,16 +126,17 @@ export function allowMove(tile: Tile, action: Action): boolean {
 export function getValidMoves(
   piece: Piece,
   board: Board,
-  candidateMoves: Move [],
+  candidateMoves: List<Move>,
   block: number,
   action: Action
-): Move [] {
-  const moves: Move [] = [];
-  candidateMoves.splice(block);
+): List<Move> {
+  let moves: List<Move> = List();
+  // @ts-ignore
+  candidateMoves = candidateMoves.splice(block);
 
-  let n = candidateMoves.length;
+  let n = candidateMoves.size;
   for (let i = 0; i < n; i ++ ) {
-    const move = candidateMoves[i];
+    const move = candidateMoves.get(i);
     const tile = board.getTile(move.getDestination());
     const pieceOnTile = tile.getPiece();
     const conitnueSearching = (previousCoordinate: Move): boolean => {
@@ -143,10 +147,10 @@ export function getValidMoves(
         if (pieceOnPreviousTile) {
           goAhead = false;
         } else {
-          moves.push(move);
+          moves = moves.push(move);
         }
       } else {
-        moves.push(move);
+        moves = moves.push(move);
       }
       return goAhead;
     };
@@ -173,21 +177,21 @@ export function nonKnightMoves(
   board: Board,
   blocks: number,
   directions: MoveDirection []
-): Move [] {
+): List<Move> {
 
-  let moves: Move [] = [];
+  let moves: List<Move> = List();
   directions.forEach((direction: MoveDirection) => {
     const movesInDirection = getDirectionMoves(board, piece, direction);
-    moves = [
-      ...moves,
-      ...getValidMoves(
-          piece,
-          board,
-          movesInDirection,
-          blocks,
-          Action.ALLOW_BOTH
+    // @ts-ignore
+    moves = moves.concat(
+      getValidMoves(
+        piece,
+        board,
+        movesInDirection,
+        blocks,
+        Action.ALLOW_BOTH
       )
-    ];
+    );
   });
   return moves;
 }

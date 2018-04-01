@@ -2,6 +2,9 @@
 import Board from 'classes/Board';
 import Move from 'classes/Board/Move';
 import {
+  List
+} from 'immutable';
+import {
   PlayerAlliance,
   TileCoordinate,
 } from 'classes/index';
@@ -64,6 +67,6 @@ export default abstract class Piece {
   isKing(): boolean {
     return this.getName() === PieceName.King;
   }
-  abstract calculateLegalMoves(board: Board): Move [];
+  abstract calculateLegalMoves(board: Board): List<Move>;
   abstract getName(): PieceName;
 }

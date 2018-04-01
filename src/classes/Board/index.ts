@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import Tile, { EmptyTile, OccupiedTile } from 'classes/Board/Tile';
 import {
   List
@@ -32,8 +31,8 @@ export default class Board {
       this.EMPTY_TILES = this.createEmpties();
       this.configuration = this.initialBoard();
       this.moveMaker = PlayerAlliance.WHITE;
-      this.whitePlayer = new Player(this, PlayerAlliance.WHITE, PlayerType.HUMAN);
-      this.blackPlayer = new Player(this, PlayerAlliance.BLACK, PlayerType.CPU);
+      this.whitePlayer = new Player(PlayerAlliance.WHITE, PlayerType.CPU);
+      this.blackPlayer = new Player(PlayerAlliance.BLACK, PlayerType.HUMAN);
       this.whitePlayer.setOpponent(this.blackPlayer);
       this.blackPlayer.setOpponent(this.whitePlayer);
       this.history = List();
@@ -97,18 +96,8 @@ export default class Board {
     const history = this.history.push(moveTransition);
     this.history = history;
   }
-  makeMove(from: Tile, to: Tile, moves: Move []): MoveTransition {
-    let moveTransition: MoveTransition;
-    const legalMove = _.find(moves, (move: Move) => {
-       const destination = move.getDestination();
-      return destination.col === to.getCoordinates().col
-        && to.getCoordinates().row === destination.row;
-    });
-    if (legalMove) {
-      moveTransition = legalMove.execute(this);
-    }
-    // @ts-ignore
-    return moveTransition;
+  makeMove(move: Move): MoveTransition {
+    return move.execute(this);
   }
   popHistory() {
     this.history = this.history.pop();

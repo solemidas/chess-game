@@ -10,12 +10,13 @@ describe('MiniMax', () => {
   });
   describe('min', () => {
     it('Should return min value', () => {
-      console.log(miniMax);
+      const min = miniMax.min(board, 2);
+      console.log('min', min);
     });
   });
   describe('max', () => {
     it('Should return ,max value', () => {
-      console.log(board);
+      // console.log(board);
     });
   });
 });

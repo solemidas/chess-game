@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as React from 'react';
 import Move from 'classes/Board/Move';
 import Board, { BoardType } from 'classes/Board';
@@ -21,14 +22,9 @@ interface Props {
 
 interface State {
   boardConfiguration: BoardType;
-  moves: Move [];
+  moves: List<Move>;
   from?: Tile;
   board: Board;
-}
-interface Play {
-  from: Tile;
-  to: Tile;
-  moves: Move [];
 }
 export default class ChessBoard extends Component<Props, State> {
   constructor(props: Props) {
@@ -38,9 +34,11 @@ export default class ChessBoard extends Component<Props, State> {
     this.highlightLegalBlocks = this.highlightLegalBlocks.bind(this);
     this.clearHighlitedBlocks = this.clearHighlitedBlocks.bind(this);
     this.keypressHandler = this.keypressHandler.bind(this);
+    this.cpuPlay = this.cpuPlay.bind(this);
+    this.makePlay = this.makePlay.bind(this);
     const board = new Board();
     this.state = {
-      moves: [],
+      moves: List(),
       boardConfiguration: board.getBoardConfiguration(),
       board,
     };
@@ -49,9 +47,25 @@ export default class ChessBoard extends Component<Props, State> {
     addEventListener('keypress', this.keypressHandler);
     addEventListener('makeMove', this.cpuPlay);
   }
-  cpuPlay(event: CustomEvent<Play>) {
+  makePlay() {
+    setTimeout(() => {
+      const {
+        board,
+      } = this.state;
+      const currentPlayer = board.getCurrentPlayer();
+      const move = currentPlayer.execute(board, 2);
+      if (move) {
+        const customEvent = new CustomEvent<Move>('makeMove', {detail: move});
+        dispatchEvent(customEvent);
+      }
+    }, 500);
+  }
+  cpuPlay(event: CustomEvent<Move>) {
     const { detail } = event;
-    this.play(detail.from, detail.to, detail.moves);
+    this.play(detail);
+  }
+  componentDidMount() {
+    this.makePlay();
   }
   componentWillUnmount() {
     removeEventListener('keypress', this.keypressHandler);
@@ -66,7 +80,7 @@ export default class ChessBoard extends Component<Props, State> {
         this.setState({
           boardConfiguration,
           board: newBoard,
-          moves: [],
+          moves: List(),
           from: undefined,
         });
         break;
@@ -74,40 +88,49 @@ export default class ChessBoard extends Component<Props, State> {
         break;
     }
   }
-  clearHighlitedBlocks(moves: Move []) {
+  clearHighlitedBlocks() {
     let { board, boardConfiguration } = this.state;
-    moves.forEach((move: Move) => {
-      const destination = move.getDestination();
-      const tile = board.getTile(destination).clearHighlight();
-      boardConfiguration = board.setPiece(boardConfiguration, destination, tile);
-    });
-
+    boardConfiguration = board.clearHighlights(boardConfiguration);
     this.setState({
       boardConfiguration,
       board: new Board(board, boardConfiguration)
     });
   }
-  highlightLegalBlocks(moves: Move []) {
+  highlightLegalBlocks(moves: List<Move>) {
     const { board } = this.state;
     moves.forEach((move: Move) => {
       board.getTile(move.getDestination()).highlightTile();
     });
   }
-  play(from: Tile, to: Tile, moves: Move []) {
+  getMove(from: Tile, to: Tile, moves: List<Move>): Move | undefined {
+    const fromLocation = from.getCoordinates();
+    const destination = to.getCoordinates();
+    const move = _.find(moves.toJS(), (legalMove: Move) => {
+      const piece = legalMove.getMovedPiece();
+      const moveDestination = legalMove.getDestination();
+      const moveFrom = piece.getPosition();
+      return moveDestination.col === destination.col
+        && moveDestination.row === destination.row
+        && fromLocation.col === moveFrom.col
+        && fromLocation.row === moveFrom.row;
+    });
+    return move;
+  }
+  play(move: Move) {
     const { board } = this.state;
-    const moveTransition = board.makeMove(from, to, moves);
-    if (moveTransition) {
-      const toBoard = moveTransition.getToBoard();
-      const boardConfiguration = toBoard.getBoardConfiguration();
-      this.setState({
-        boardConfiguration: boardConfiguration,
-        moves: [],
-        from: undefined,
-        board: toBoard,
-      }, () => {
-          this.clearHighlitedBlocks(moves);
-        });
-      }
+    const moveTransition = board.makeMove(move);
+    console.log('play:move', moveTransition.getToBoard().getBoardConfiguration().toJS());
+    const toBoard = moveTransition.getToBoard();
+    const boardConfiguration = toBoard.getBoardConfiguration();
+    this.setState({
+      boardConfiguration: boardConfiguration,
+      moves: List(),
+      from: undefined,
+      board: toBoard,
+    }, () => {
+        this.clearHighlitedBlocks();
+        // this.makePlay();
+    });
   }
   handleBoardClick(tile: Tile) {
     const {
@@ -115,12 +138,15 @@ export default class ChessBoard extends Component<Props, State> {
       from,
       board
     } = this.state;
-    if (moves.length > 0 && from && tile !== from) {
-      this.play(from, tile, moves);
+    if (moves.size > 0 && from && tile !== from) {
+      const move = this.getMove(from, tile, moves);
+      if (move) {
+        this.play(move);
+      }
     } else if (tile === from) {
         const boardConfiguration = board.clearHighlights(board.getBoardConfiguration());
         this.setState({
-          moves: [],
+          moves: List(),
           from: undefined,
           boardConfiguration,
         });

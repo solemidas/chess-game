@@ -2,6 +2,9 @@ import Board, { BoardType } from 'classes/Board';
 import Piece, { PieceName } from 'classes/Piece';
 import Move from 'classes/Board/Move';
 import {
+  List
+} from 'immutable';
+import {
   PlayerAlliance,
   TileCoordinate,
   MoveDirection,
@@ -26,8 +29,8 @@ export default class King extends Piece {
   constructor(alliance: PlayerAlliance, position: TileCoordinate) {
     super(alliance, position, 900);
   }
-  calculateLegalMoves(board: Board): Move [] {
-    let moves: Move [] = nonKnightMoves(this, board, 1, King.getDirections());
+  calculateLegalMoves(board: Board): List<Move> {
+    let moves: List<Move> = nonKnightMoves(this, board, 1, King.getDirections());
     if (this.canCastleKingSide(board)) {
       // moves.push(new CastlingMove(this, 1));
     }
@@ -48,7 +51,6 @@ export default class King extends Piece {
       && piece.color === this.color
       && !piece.hasMoved()
     ) {
-      console.log(piece);
       return piece;
     }
     return null;
@@ -70,7 +72,6 @@ export default class King extends Piece {
       return boundary === 7 ? i < 7 : i > 0;
     };
     for (let col = y + dy; isValid(col); col = col + dy) {
-      console.log(col);
       const tile = board.getTile({row, col});
       const piece = tile.getPiece();
       if (piece) {

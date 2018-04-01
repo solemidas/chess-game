@@ -4,6 +4,9 @@ import {
   MoveDirection,
   Action
 } from 'classes/index';
+import {
+  List
+} from 'immutable';
 import Board from 'classes/Board';
 import Move from 'classes/Board/Move';
 import Piece, { PieceName } from 'classes/Piece';
@@ -27,16 +30,22 @@ export default class Pawn extends Piece {
     }
     return MoveDirection.DOWN;
   }
-  calculateLegalMoves(board: Board): Move [] {
-    let diagonalMoves: Move [] = [];
-    let verticalMoves: Move [] = [];
+  calculateLegalMoves(board: Board): List<Move> {
+    let diagonalMoves: List<Move> = List();
+    let verticalMoves: List<Move> = List();
     const diagonalDirections: MoveDirection [] = this.getDiagonalDirections();
     diagonalDirections.forEach((direction: MoveDirection) => {
       const diagonals = getDirectionMoves(board, this, direction);
-      diagonalMoves = [
-        ...diagonalMoves,
-        ...getValidMoves(this, board, diagonals, 1, Action.CAPTURE)
-      ];
+      // @ts-ignore
+      diagonalMoves = diagonalMoves.concat(
+        getValidMoves(
+          this,
+          board,
+          diagonals,
+          1,
+          Action.CAPTURE
+        )
+      );
     });
     const verticalDirection: MoveDirection = this.getVerticalDirection();
     const blocks = this.hasMoved() ? 1 : 2;
@@ -46,10 +55,8 @@ export default class Pawn extends Piece {
     if (enPassantMove) {
       diagonalMoves.push(enPassantMove);
     }
-    let moves: Move [] = [
-      ...diagonalMoves,
-      ...verticalMoves
-    ];
+    // @ts-ignore
+    let moves: List<Move> = diagonalMoves.concat(verticalMoves);
     return moves;
   }
   enPassant(board: Board): Move | null {

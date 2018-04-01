@@ -18,12 +18,10 @@ export default class Player extends MiniMax {
   private readonly alliance: PlayerAlliance;
   private readonly playerType: PlayerType;
   private opponent: Player;
-  private readonly board: Board;
-  constructor(board: Board, alliance: PlayerAlliance, playerType: PlayerType) {
+  constructor(alliance: PlayerAlliance, playerType: PlayerType) {
     super();
     this.alliance = alliance;
     this.playerType = playerType;
-    this.board = board;
   }
 
   isCPU(): boolean {
@@ -38,9 +36,9 @@ export default class Player extends MiniMax {
   getOpponent(): Player {
     return this.opponent;
   }
-  getKing(): Piece {
+  getKing(board: Board): Piece {
     let piece: Piece;
-    this.board.getBoardConfiguration().toJS().forEach((row: List<Tile>) => {
+    board.getBoardConfiguration().toJS().forEach((row: List<Tile>) => {
       row.forEach((tile: Tile) => {
         const pieceOnTile = tile.getPiece();
         if (pieceOnTile && !piece) {
@@ -54,18 +52,18 @@ export default class Player extends MiniMax {
     return piece;
   }
 
-  isInCheck(): boolean {
-    const king = this.getKing();
+  isInCheck(board: Board): boolean {
+    const king = this.getKing(board);
     if (king) {
       const position = king.getPosition();
-      const moves: Move [] = [];
-      this.getOpponent().getLegalMoves().forEach((move) => {
+      let moves: List<Move> = List();
+      this.getOpponent().getLegalMoves(board).toJS().forEach((move: Move) => {
         const destination = move.getDestination();
         if (position.row === destination.row && position.col === destination.col) {
-          moves.push(move);
+          moves = moves.push(move);
         }
       });
-      return moves.length > 0;
+      return moves.size > 0;
     }
     return true;
   }
@@ -76,22 +74,24 @@ export default class Player extends MiniMax {
       throw new Error('Opponents Shoul Not have the same alliance');
     }
   }
-  getActivePieces(): void {
-    //
-  }
-  // TODO 
-  getLegalMoves(): Move [] {
-    let moves: Move [] = [];
-    this.board.getBoardConfiguration().forEach((row: List<Tile>) => {
+  getActivePieces(board: Board): Piece [] {
+    const pieces: Piece [] = [];
+    board.getBoardConfiguration().forEach((row: List<Tile>) => {
       row.forEach((tile: Tile) => {
         const pieceOnTile = tile.getPiece();
         if (pieceOnTile && pieceOnTile.color === this.alliance) {
-          moves = [
-            ...moves,
-            ...pieceOnTile.calculateLegalMoves(this.board)
-          ];
+          pieces.push(pieceOnTile);
         }
       });
+    });
+    return pieces;
+  }
+  getLegalMoves(board: Board): List<Move> {
+    let moves: List<Move> = List();
+    const activePieces = this.getActivePieces(board);
+    activePieces.forEach((piece) => {
+      // @ts-ignore
+      moves = moves.concat(piece.calculateLegalMoves(board));
     });
     return moves;
   }
