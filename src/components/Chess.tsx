@@ -58,7 +58,7 @@ export default class ChessBoard extends Component<Props, State> {
         const customEvent = new CustomEvent<Move>('makeMove', {detail: move});
         dispatchEvent(customEvent);
       }
-    }, 500);
+    }, 2000);
   }
   cpuPlay(event: CustomEvent<Move>) {
     const { detail } = event;
@@ -129,7 +129,10 @@ export default class ChessBoard extends Component<Props, State> {
       board: toBoard,
     }, () => {
         this.clearHighlitedBlocks();
-        // this.makePlay();
+        const currentPlayer = this.state.board.getCurrentPlayer();
+        if (currentPlayer.isCPU()) {
+          this.makePlay();
+        }
     });
   }
   handleBoardClick(tile: Tile) {

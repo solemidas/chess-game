@@ -11,11 +11,13 @@ import Bishop  from 'classes/Piece/Bishop';
 import Knight  from 'classes/Piece/Knight';
 export default class Move {
   private readonly piece: Piece;
+  private readonly clonedPiece: Piece;
   private readonly destination: TileCoordinate;
   private readonly fromLocation: TileCoordinate;
   private readonly capture: Tile;
   constructor(piece: Piece, destination: TileCoordinate, capture: Tile) {
-    this.piece = this.clonePiece(piece);
+    this.clonedPiece = this.clonePiece(piece);
+    this.piece = piece;
     this.fromLocation = piece.getPosition();
     this.destination = destination;
     this.capture = capture;
@@ -57,12 +59,12 @@ export default class Move {
     const from = board.getTile(this.piece.getPosition());
     board.switchTurn(this.piece.color);
     const tileCoordinates = this.destination;
-    this.piece.pieceHasMoved();
-    this.piece.addDistance(this.getDistance());
-    this.piece.setPosition(tileCoordinates);
+    this.clonedPiece.pieceHasMoved();
+    this.clonedPiece.addDistance(this.getDistance());
+    this.clonedPiece.setPosition(tileCoordinates);
     configuration = board.removePieceOnTile(configuration, from);
     configuration = this.capturePiece(board, configuration);
-    configuration = board.setPiece(configuration, tileCoordinates, new OccupiedTile(tileCoordinates, this.piece));
+    configuration = board.setPiece(configuration, tileCoordinates, new OccupiedTile(tileCoordinates, this.clonedPiece));
     const toBoard = new Board(board, configuration);
     const moveTransition = new MoveTransition(fromBoard, toBoard, this);
     return moveTransition;

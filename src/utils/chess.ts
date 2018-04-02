@@ -154,7 +154,7 @@ export function getValidMoves(
       }
       return goAhead;
     };
-    const previousMove = moves[i - 1];
+    const previousMove = moves.get(i - 1);
     if (pieceOnTile && pieceOnTile.color !== piece.color && allowMove(tile, action)) {
       const goAhead = conitnueSearching(previousMove);
       if (!goAhead) {

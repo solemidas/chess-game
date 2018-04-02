@@ -72,7 +72,7 @@ export default class Pawn extends Piece {
           && previousMove.getMovedPiece().getMoves() === 1
         ) {
           const verticalDirection: MoveDirection = this.getVerticalDirection();
-          let vertical = getDirectionMoves(board, this, verticalDirection)[0];
+          let vertical = getDirectionMoves(board, this, verticalDirection).get(0);
           const tileBehind: TileCoordinate = {
             col: destination.col,
             row: vertical.getDestination().row
