@@ -119,7 +119,6 @@ export default class ChessBoard extends Component<Props, State> {
   play(move: Move) {
     const { board } = this.state;
     const moveTransition = board.makeMove(move);
-    console.log('play:move', moveTransition.getToBoard().getBoardConfiguration().toJS());
     const toBoard = moveTransition.getToBoard();
     const boardConfiguration = toBoard.getBoardConfiguration();
     this.setState({
